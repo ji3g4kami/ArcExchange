@@ -30,7 +30,6 @@ struct CurrencyPickerSheet: View {
         .padding(.top, 32)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.pageBackground)
-        .accessibilityIdentifier(A11yID.pickerSheet)
         .presentationDetents([.medium, .large])
         .presentationBackground(Color.pageBackground)
     }
@@ -88,6 +87,7 @@ struct CurrencyPickerSheet: View {
             }
         }
         .frame(width: 40, height: 40)
+        .accessibilityHidden(true)
     }
 
     @ViewBuilder
@@ -98,10 +98,12 @@ struct CurrencyPickerSheet: View {
                 .foregroundStyle(.white)
                 .frame(width: 24, height: 24)
                 .background(Circle().fill(Color.brandGreen))
+                .accessibilityHidden(true)
         } else {
             Circle()
                 .strokeBorder(Color.radioBorder, lineWidth: 1.5)
                 .frame(width: 24, height: 24)
+                .accessibilityHidden(true)
         }
     }
 }

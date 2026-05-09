@@ -6,7 +6,6 @@ enum A11yID {
     static let usdcLabel   = "label.usdc"
     static let foreignLabel = "label.foreign"
     static let swapButton  = "button.swap"
-    static let pickerSheet = "sheet.currencyPicker"
     static let errorBanner = "banner.error"
     static let retryButton = "button.retry"
     static let lastUpdated = "text.lastUpdated"
