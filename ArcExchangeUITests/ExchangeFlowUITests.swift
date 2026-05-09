@@ -14,6 +14,15 @@ final class ExchangeFlowUITests: XCTestCase {
         return app
     }
 
+    /// Wait for the rate to load — typing before this races with bootstrap and
+    /// `recompute` exits early when `rate` is still nil.
+    @discardableResult
+    private func waitForRateLine(in app: XCUIApplication) -> XCUIElement {
+        let rateLine = app.staticTexts["text.rateLine"].firstMatch
+        XCTAssertTrue(rateLine.waitForExistence(timeout: 8), "Rate line did not appear")
+        return rateLine
+    }
+
     func test_launch_shows_USDc_and_default_foreign_currency() {
         let app = makeApp()
         app.launch()
@@ -44,6 +53,7 @@ final class ExchangeFlowUITests: XCTestCase {
     func test_typing_into_USDc_updates_foreign_field() {
         let app = makeApp()
         app.launch()
+        waitForRateLine(in: app)
 
         let usdcField = app.textFields["amount.usdc"].firstMatch
         XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
@@ -59,6 +69,7 @@ final class ExchangeFlowUITests: XCTestCase {
     func test_typing_into_foreign_updates_USDc_field() {
         let app = makeApp()
         app.launch()
+        waitForRateLine(in: app)
 
         let foreignField = app.textFields["amount.foreign"].firstMatch
         XCTAssertTrue(foreignField.waitForExistence(timeout: 5))
@@ -118,6 +129,29 @@ final class ExchangeFlowUITests: XCTestCase {
             Thread.sleep(forTimeInterval: 0.1)
         }
         XCTAssertTrue(swapped, "Expected USDc and foreign rows to swap vertical positions after swap")
+    }
+
+    func test_offline_currency_switch_clears_rate_line_instead_of_mislabeling() {
+        let app = makeApp(launchArgs: ["-UITestStubSucceedThenFail", "1"])
+        app.launch()
+
+        let rateLine = waitForRateLine(in: app)
+        XCTAssertTrue(rateLine.label.contains("MXN"))
+
+        let foreignLabel = app.buttons["label.foreign"].firstMatch
+        XCTAssertTrue(foreignLabel.waitForExistence(timeout: 5))
+        foreignLabel.tap()
+
+        let brlRow = app.buttons["picker.row.BRL"].firstMatch
+        XCTAssertTrue(brlRow.waitForExistence(timeout: 5))
+        brlRow.tap()
+
+        let retry = app.buttons["button.retry"].firstMatch
+        XCTAssertTrue(retry.waitForExistence(timeout: 5), "Retry should appear after offline switch")
+
+        let gonePredicate = NSPredicate(format: "exists == false")
+        let gone = expectation(for: gonePredicate, evaluatedWith: rateLine)
+        wait(for: [gone], timeout: 5)
     }
 
     func test_network_failure_shows_error_banner_with_retry() {

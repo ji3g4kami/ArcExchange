@@ -155,6 +155,41 @@ struct ExchangeViewModelTests {
     }
 
     @Test
+    func selecting_currency_clears_stale_rate_when_refresh_fails() async {
+        let service = MockRateService()
+        await service.setCurrencyResult(.success(["MXN", "BRL"]))
+        await service.setTickerResult(.success([Self.tickerMXN()]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+        #expect(viewModel.rate?.currencyCode == "MXN")
+
+        await service.setTickerResult(.failure(RateServiceError.transport("offline")))
+        await viewModel.selectCurrency(Currency.resolve("BRL"))
+
+        #expect(viewModel.rate == nil)
+        #expect(viewModel.lastUpdated == nil)
+        #expect(viewModel.formattedRate == nil)
+        if case .failed = viewModel.state {} else {
+            Issue.record("Expected failed state, got \(viewModel.state)")
+        }
+    }
+
+    @Test
+    func recompute_does_nothing_after_failed_currency_switch() async {
+        let service = MockRateService()
+        await service.setCurrencyResult(.success(["MXN", "BRL"]))
+        await service.setTickerResult(.success([Self.tickerMXN()]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        await service.setTickerResult(.failure(RateServiceError.transport("offline")))
+        await viewModel.selectCurrency(Currency.resolve("BRL"))
+
+        viewModel.didEditUSDc(Decimal(10))
+        #expect(viewModel.foreignAmount == nil)
+    }
+
+    @Test
     func formatted_rate_is_nil_before_load() async {
         let service = MockRateService()
         let viewModel = ExchangeViewModel(service: service)

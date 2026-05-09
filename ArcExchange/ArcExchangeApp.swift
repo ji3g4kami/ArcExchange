@@ -13,6 +13,8 @@ struct ArcExchangeApp: App {
         let service: any RateService
         if isFlagEnabled("-UITestStubFailure") {
             service = StubFailingService()
+        } else if isFlagEnabled("-UITestStubSucceedThenFail") {
+            service = StubSucceedThenFailService()
         } else if isFlagEnabled("-UITestStubSuccess") {
             service = StubSuccessService()
         } else {
@@ -37,18 +39,32 @@ private struct StubFailingService: RateService {
     }
 }
 
+private func makeStubTickers(for currencyCodes: [String]) -> [Ticker] {
+    currencyCodes.map { code in
+        Ticker(
+            ask: Decimal(string: "20.5")!,
+            bid: Decimal(string: "19.5")!,
+            book: "usdc_\(code.lowercased())",
+            date: Date()
+        )
+    }
+}
+
+private actor StubSucceedThenFailService: RateService {
+    private var tickerCalls = 0
+    func tickers(for currencyCodes: [String]) async throws -> [Ticker] {
+        tickerCalls += 1
+        if tickerCalls > 1 {
+            throw RateServiceError.transport("Stub: subsequent calls fail")
+        }
+        return makeStubTickers(for: currencyCodes)
+    }
+    func availableCurrencies() async throws -> [String] { Currency.fallbackCodes }
+}
+
 private struct StubSuccessService: RateService {
     func tickers(for currencyCodes: [String]) async throws -> [Ticker] {
-        currencyCodes.map { code in
-            Ticker(
-                ask: Decimal(string: "20.5")!,
-                bid: Decimal(string: "19.5")!,
-                book: "usdc_\(code.lowercased())",
-                date: Date()
-            )
-        }
+        makeStubTickers(for: currencyCodes)
     }
-    func availableCurrencies() async throws -> [String] {
-        ["MXN", "ARS", "BRL", "COP", "EURc"]
-    }
+    func availableCurrencies() async throws -> [String] { Currency.fallbackCodes }
 }

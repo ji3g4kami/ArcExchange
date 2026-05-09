@@ -52,7 +52,7 @@ struct ExchangeScreen: View {
             .padding(.top, 8)
 
             if let updated = viewModel.lastUpdated {
-                Text("Updated \(updated, style: .relative) ago")
+                Text("Updated at \(updated, style: .time)")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier(A11yID.lastUpdated)
@@ -78,22 +78,28 @@ struct ExchangeScreen: View {
     private var usdcRow: some View {
         CurrencyFieldView(
             currency: .usdc,
-            amount: $viewModel.usdcAmount,
+            amount: Binding(
+                get: { viewModel.usdcAmount },
+                set: { viewModel.didEditUSDc($0) }
+            ),
             labelIdentifier: A11yID.usdcLabel,
             fieldIdentifier: A11yID.usdcField,
             onCurrencyTap: nil,
-            onAmountChange: { viewModel.didEditUSDc($0) }
+            onAmountChange: { _ in }
         )
     }
 
     private var foreignRow: some View {
         CurrencyFieldView(
             currency: viewModel.selectedCurrency,
-            amount: $viewModel.foreignAmount,
+            amount: Binding(
+                get: { viewModel.foreignAmount },
+                set: { viewModel.didEditForeign($0) }
+            ),
             labelIdentifier: A11yID.foreignLabel,
             fieldIdentifier: A11yID.foreignField,
             onCurrencyTap: { showPicker = true },
-            onAmountChange: { viewModel.didEditForeign($0) }
+            onAmountChange: { _ in }
         )
     }
 

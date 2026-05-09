@@ -83,6 +83,8 @@ final class ExchangeViewModel {
     func selectCurrency(_ currency: Currency) async {
         guard currency.code != selectedCurrency.code else { return }
         selectedCurrency = currency
+        rate = nil
+        lastUpdated = nil
         await refresh()
     }
 
