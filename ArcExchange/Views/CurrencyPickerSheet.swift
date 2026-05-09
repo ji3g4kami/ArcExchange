@@ -22,16 +22,16 @@ struct CurrencyPickerSheet: View {
                     .accessibilityIdentifier(A11yID.pickerRow(currency.code))
                 }
             }
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 16))
+            .background(Color("CardBackground"), in: RoundedRectangle(cornerRadius: 16))
             .padding(.horizontal, 16)
 
             Spacer(minLength: 0)
         }
         .padding(.top, 32)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color.pageBackground)
+        .background(Color("PageBackground"))
         .presentationDetents([.medium, .large])
-        .presentationBackground(Color.pageBackground)
+        .presentationBackground(Color("PageBackground"))
     }
 
     private var header: some View {
@@ -74,7 +74,7 @@ struct CurrencyPickerSheet: View {
     private func flagChip(for currency: Currency) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.flagChipBackground)
+                .fill(Color("FlagChipBackground"))
             if let asset = currency.flagAssetName {
                 Image(asset)
                     .resizable()
@@ -97,18 +97,14 @@ struct CurrencyPickerSheet: View {
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(.white)
                 .frame(width: 24, height: 24)
-                .background(Circle().fill(Color.brandGreen))
+                .background(Circle().fill(Color("BrandGreen")))
                 .accessibilityHidden(true)
         } else {
             Circle()
-                .strokeBorder(Color.radioBorder, lineWidth: 1.5)
+                .strokeBorder(Color("RadioBorder"), lineWidth: 1.5)
                 .frame(width: 24, height: 24)
                 .accessibilityHidden(true)
         }
     }
 }
 
-private extension Color {
-    static let flagChipBackground = Color(red: 0xF4 / 255, green: 0xF4 / 255, blue: 0xF4 / 255)
-    static let radioBorder = Color(red: 0xD4 / 255, green: 0xD4 / 255, blue: 0xD4 / 255)
-}

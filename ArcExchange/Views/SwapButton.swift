@@ -15,9 +15,9 @@ struct SwapButton: View {
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(.white)
                 .frame(width: 32, height: 32)
-                .background(Circle().fill(Color.brandGreen))
+                .background(Circle().fill(Color("BrandGreen")))
                 .padding(4)
-                .background(Circle().fill(Color.pageBackground))
+                .background(Circle().fill(Color("PageBackground")))
                 .rotationEffect(.degrees(rotation))
         }
         .buttonStyle(.plain)

@@ -6,7 +6,7 @@ struct ExchangeScreen: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color.pageBackground.ignoresSafeArea()
+            Color("PageBackground").ignoresSafeArea()
             ScrollView {
                 content
             }
@@ -113,7 +113,7 @@ struct ExchangeScreen: View {
                 if let formatted = viewModel.formattedRate {
                     Text(formatted)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color.brandGreen)
+                        .foregroundStyle(Color("BrandGreen"))
                         .accessibilityIdentifier(A11yID.rateLine)
                 }
             }
@@ -122,7 +122,3 @@ struct ExchangeScreen: View {
     }
 }
 
-extension Color {
-    static let brandGreen = Color(red: 0x22 / 255, green: 0xD0 / 255, blue: 0x81 / 255)
-    static let pageBackground = Color(red: 0xF8 / 255, green: 0xF8 / 255, blue: 0xF8 / 255)
-}

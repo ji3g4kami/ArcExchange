@@ -58,7 +58,7 @@ struct CurrencyFieldView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 22)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 16))
+        .background(Color("CardBackground"), in: RoundedRectangle(cornerRadius: 16))
     }
 
     private var amountFormat: Decimal.FormatStyle {
