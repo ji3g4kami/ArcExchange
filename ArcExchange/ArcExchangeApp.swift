@@ -50,6 +50,6 @@ private struct StubSuccessService: RateService {
         }
     }
     func availableCurrencies() async throws -> [String] {
-        ["MXN", "ARS", "BRL", "COP"]
+        ["MXN", "ARS", "BRL", "COP", "EURc"]
     }
 }
