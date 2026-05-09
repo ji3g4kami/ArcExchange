@@ -1,7 +1,7 @@
 import Foundation
 
 extension JSONDecoder {
-    static func dolarApp() -> JSONDecoder {
+    static let dolarApp: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
@@ -15,7 +15,7 @@ extension JSONDecoder {
             )
         }
         return decoder
-    }
+    }()
 }
 
 enum DolarAppDateParser {

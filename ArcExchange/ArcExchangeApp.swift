@@ -5,11 +5,15 @@ struct ArcExchangeApp: App {
     @State private var viewModel: ExchangeViewModel
 
     init() {
-        let arguments = ProcessInfo.processInfo.arguments
+        let args = ProcessInfo.processInfo.arguments
+        func isFlagEnabled(_ key: String) -> Bool {
+            guard let index = args.firstIndex(of: key), index + 1 < args.count else { return false }
+            return args[index + 1] == "1"
+        }
         let service: any RateService
-        if arguments.contains("-UITestStubFailure") && nextArgument(after: "-UITestStubFailure", in: arguments) == "1" {
+        if isFlagEnabled("-UITestStubFailure") {
             service = StubFailingService()
-        } else if arguments.contains("-UITestStubSuccess") && nextArgument(after: "-UITestStubSuccess", in: arguments) == "1" {
+        } else if isFlagEnabled("-UITestStubSuccess") {
             service = StubSuccessService()
         } else {
             service = LiveRateService()
@@ -22,11 +26,6 @@ struct ArcExchangeApp: App {
             ExchangeScreen(viewModel: viewModel)
         }
     }
-}
-
-private func nextArgument(after key: String, in arguments: [String]) -> String? {
-    guard let index = arguments.firstIndex(of: key), index + 1 < arguments.count else { return nil }
-    return arguments[index + 1]
 }
 
 private struct StubFailingService: RateService {

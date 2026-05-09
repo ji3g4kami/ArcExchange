@@ -90,8 +90,16 @@ struct LiveRateServiceTests {
         }
 
         let service = LiveRateService(session: session)
-        await #expect(throws: RateServiceError.decoding("")) {
+        do {
             _ = try await service.tickers(for: ["MXN"])
+            Issue.record("Expected decoding error")
+        } catch let error as RateServiceError {
+            guard case .decoding = error else {
+                Issue.record("Expected .decoding, got \(error)")
+                return
+            }
+        } catch {
+            Issue.record("Expected RateServiceError, got \(error)")
         }
     }
 

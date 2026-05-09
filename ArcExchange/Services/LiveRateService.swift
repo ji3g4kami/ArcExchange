@@ -23,7 +23,7 @@ struct LiveRateService: RateService {
         guard let url = components?.url else { throw RateServiceError.invalidURL }
         let data = try await fetchData(url: url)
         do {
-            return try JSONDecoder.dolarApp().decode([Ticker].self, from: data)
+            return try JSONDecoder.dolarApp.decode([Ticker].self, from: data)
         } catch {
             throw RateServiceError.decoding(String(describing: error))
         }

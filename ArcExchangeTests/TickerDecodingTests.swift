@@ -6,7 +6,7 @@ struct TickerDecodingTests {
 
     @Test
     func decodes_array_of_two_tickers_from_fixture() throws {
-        let decoder = JSONDecoder.dolarApp()
+        let decoder = JSONDecoder.dolarApp
         let tickers = try decoder.decode([Ticker].self, from: TickersFixture.twoTickersData)
         #expect(tickers.count == 2)
         #expect(tickers[0].book == "usdc_mxn")
@@ -15,7 +15,7 @@ struct TickerDecodingTests {
 
     @Test
     func decodes_ask_and_bid_as_decimal_preserving_full_precision() throws {
-        let decoder = JSONDecoder.dolarApp()
+        let decoder = JSONDecoder.dolarApp
         let tickers = try decoder.decode([Ticker].self, from: TickersFixture.twoTickersData)
 
         #expect(tickers[0].ask == Decimal(string: "18.4105")!)
@@ -26,7 +26,7 @@ struct TickerDecodingTests {
 
     @Test
     func decodes_iso8601_date_with_fractional_seconds() throws {
-        let decoder = JSONDecoder.dolarApp()
+        let decoder = JSONDecoder.dolarApp
         let tickers = try decoder.decode([Ticker].self, from: TickersFixture.twoTickersData)
 
         var components = DateComponents()

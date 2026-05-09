@@ -20,17 +20,21 @@ final class ExchangeViewModel {
 
     init(service: any RateService) {
         self.service = service
-        self.selectedCurrency = Currency.fallback.first ?? Currency.resolve("MXN")
+        self.selectedCurrency = Currency.resolve("MXN")
     }
 
-    var formattedRate: String? {
-        guard let mid = rate?.mid, mid > 0 else { return nil }
+    private static let rateFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.usesGroupingSeparator = true
         formatter.minimumFractionDigits = 2
         formatter.maximumFractionDigits = 4
-        guard let value = formatter.string(from: mid as NSDecimalNumber) else { return nil }
+        return formatter
+    }()
+
+    var formattedRate: String? {
+        guard let mid = rate?.mid, mid > 0 else { return nil }
+        guard let value = Self.rateFormatter.string(from: mid as NSDecimalNumber) else { return nil }
         return "1 USDc = \(value) \(selectedCurrency.code)"
     }
 
@@ -47,14 +51,14 @@ final class ExchangeViewModel {
     func refresh() async {
         refreshTask?.cancel()
         let code = selectedCurrency.code
-        let task = Task { [service] in
-            await self.performRefresh(for: code, using: service)
+        let task = Task {
+            await self.performRefresh(for: code)
         }
         refreshTask = task
         await task.value
     }
 
-    private func performRefresh(for code: String, using service: any RateService) async {
+    private func performRefresh(for code: String) async {
         state = .loading
         do {
             let tickers = try await service.tickers(for: [code])
@@ -88,12 +92,14 @@ final class ExchangeViewModel {
     }
 
     func didEditUSDc(_ value: Decimal?) {
+        guard value != usdcAmount else { return }
         usdcAmount = value
         activeEditor = .fromUSDc
         recompute(otherFor: .fromUSDc)
     }
 
     func didEditForeign(_ value: Decimal?) {
+        guard value != foreignAmount else { return }
         foreignAmount = value
         activeEditor = .toUSDc
         recompute(otherFor: .toUSDc)
@@ -112,16 +118,18 @@ final class ExchangeViewModel {
         switch active {
         case .fromUSDc:
             guard let amount = usdcAmount else {
-                foreignAmount = nil
+                if foreignAmount != nil { foreignAmount = nil }
                 return
             }
-            foreignAmount = CurrencyConverter.convert(amount: amount, mid: mid, direction: .fromUSDc)
+            let next = CurrencyConverter.convert(amount: amount, mid: mid, direction: .fromUSDc)
+            if foreignAmount != next { foreignAmount = next }
         case .toUSDc:
             guard let amount = foreignAmount else {
-                usdcAmount = nil
+                if usdcAmount != nil { usdcAmount = nil }
                 return
             }
-            usdcAmount = CurrencyConverter.convert(amount: amount, mid: mid, direction: .toUSDc)
+            let next = CurrencyConverter.convert(amount: amount, mid: mid, direction: .toUSDc)
+            if usdcAmount != next { usdcAmount = next }
         }
     }
 
