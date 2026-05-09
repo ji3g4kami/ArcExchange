@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5165F0282FAF59BC00735575 /* Requirements.md in Resources */ = {isa = PBXBuildFile; fileRef = 5165F0272FAF59BC00735575 /* Requirements.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		5165F00B2FAF56B100735575 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		5165EFFD2FAF56B000735575 /* ArcExchange.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ArcExchange.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5165F00A2FAF56B100735575 /* ArcExchangeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ArcExchangeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5165F0142FAF56B100735575 /* ArcExchangeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ArcExchangeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5165F0272FAF59BC00735575 /* Requirements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Requirements.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		5165EFF42FAF56B000735575 = {
 			isa = PBXGroup;
 			children = (
+				5165F0272FAF59BC00735575 /* Requirements.md */,
 				5165EFFF2FAF56B000735575 /* ArcExchange */,
 				5165F00D2FAF56B100735575 /* ArcExchangeTests */,
 				5165F0172FAF56B100735575 /* ArcExchangeUITests */,
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5165F0282FAF59BC00735575 /* Requirements.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
