@@ -19,7 +19,7 @@ struct CurrencyCatalogTests {
         await service.setCurrencyResult(.failure(RateServiceError.http(503)))
 
         let codes = await CurrencyCatalog.load(using: service)
-        #expect(codes == ["MXN", "ARS", "BRL", "COP"])
+        #expect(codes == ["MXN", "ARS", "BRL", "COP", "EURc"])
     }
 
     @Test
@@ -28,7 +28,7 @@ struct CurrencyCatalogTests {
         await service.setCurrencyResult(.success([]))
 
         let codes = await CurrencyCatalog.load(using: service)
-        #expect(codes == ["MXN", "ARS", "BRL", "COP"])
+        #expect(codes == ["MXN", "ARS", "BRL", "COP", "EURc"])
     }
 
     @Test

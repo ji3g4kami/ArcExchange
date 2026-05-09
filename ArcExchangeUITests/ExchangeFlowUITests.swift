@@ -29,6 +29,18 @@ final class ExchangeFlowUITests: XCTestCase {
         XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
     }
 
+    func test_header_shows_title_and_green_rate_line() {
+        let app = makeApp()
+        app.launch()
+
+        let title = app.staticTexts["Exchange calculator"].firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+
+        let rateLine = app.staticTexts["text.rateLine"].firstMatch
+        XCTAssertTrue(rateLine.waitForExistence(timeout: 5))
+        XCTAssertTrue(rateLine.label.contains("USDc ="))
+    }
+
     func test_typing_into_USDc_updates_foreign_field() {
         let app = makeApp()
         app.launch()

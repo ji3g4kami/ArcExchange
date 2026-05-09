@@ -24,16 +24,23 @@ struct ExchangeViewModelTests {
         )
     }
 
+    private static let epsilon = Decimal(string: "0.000001")!
+
+    private static func absoluteDifference(_ lhs: Decimal, _ rhs: Decimal) -> Decimal {
+        let diff = lhs - rhs
+        return diff < 0 ? -diff : diff
+    }
+
     @Test
     func initial_state_is_idle_with_fallback_currencies_and_default_selection() async {
         let service = MockRateService()
         let viewModel = ExchangeViewModel(service: service)
 
         #expect(viewModel.state == .idle)
-        #expect(viewModel.availableCurrencies.map(\.code) == ["MXN", "ARS", "BRL", "COP"])
+        #expect(viewModel.availableCurrencies.map(\.code) == ["MXN", "ARS", "BRL", "COP", "EURc"])
         #expect(viewModel.selectedCurrency.code == "MXN")
-        #expect(viewModel.usdcInput == "")
-        #expect(viewModel.foreignInput == "")
+        #expect(viewModel.usdcAmount == nil)
+        #expect(viewModel.foreignAmount == nil)
     }
 
     @Test
@@ -63,7 +70,7 @@ struct ExchangeViewModelTests {
         if case .failed = viewModel.state {} else {
             Issue.record("Expected failed state, got \(viewModel.state)")
         }
-        #expect(viewModel.availableCurrencies.map(\.code) == ["MXN", "ARS", "BRL", "COP"])
+        #expect(viewModel.availableCurrencies.map(\.code) == ["MXN", "ARS", "BRL", "COP", "EURc"])
     }
 
     @Test
@@ -73,15 +80,12 @@ struct ExchangeViewModelTests {
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.didEditUSDc("10")
+        viewModel.didEditUSDc(Decimal(10))
 
         let mid: Decimal = (Decimal(20) + Decimal(18)) / 2
-        let expected = DecimalFormatting.display(Decimal(10) * mid, locale: Locale(identifier: "en_US_POSIX"))
-        let actual = DecimalFormatting.display(
-            DecimalFormatting.parse(viewModel.foreignInput, locale: Locale(identifier: "en_US_POSIX")) ?? 0,
-            locale: Locale(identifier: "en_US_POSIX")
-        )
-        #expect(actual == expected)
+        let expected = Decimal(10) * mid
+        let actual = viewModel.foreignAmount ?? 0
+        #expect(Self.absoluteDifference(actual, expected) < Self.epsilon)
         #expect(viewModel.activeEditor == .fromUSDc)
     }
 
@@ -92,41 +96,27 @@ struct ExchangeViewModelTests {
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.didEditForeign("190")
+        viewModel.didEditForeign(Decimal(190))
 
         let mid: Decimal = (Decimal(20) + Decimal(18)) / 2
         let expectedUsdc = Decimal(190) / mid
-        let parsed = DecimalFormatting.parse(viewModel.usdcInput, locale: Locale(identifier: "en_US_POSIX")) ?? 0
-
-        var diff = parsed - expectedUsdc
-        if diff < 0 { diff = -diff }
-        #expect(diff < Decimal(string: "0.000001")!)
+        let actual = viewModel.usdcAmount ?? 0
+        #expect(Self.absoluteDifference(actual, expectedUsdc) < Self.epsilon)
         #expect(viewModel.activeEditor == .toUSDc)
     }
 
     @Test
-    func empty_input_clears_other_field() async {
+    func clearing_input_clears_other_field() async {
         let service = MockRateService()
         await service.setTickerResult(.success([Self.tickerMXN()]))
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.didEditUSDc("10")
-        #expect(viewModel.foreignInput.isEmpty == false)
+        viewModel.didEditUSDc(Decimal(10))
+        #expect(viewModel.foreignAmount != nil)
 
-        viewModel.didEditUSDc("")
-        #expect(viewModel.foreignInput == "")
-    }
-
-    @Test
-    func non_numeric_input_clears_other_field() async {
-        let service = MockRateService()
-        await service.setTickerResult(.success([Self.tickerMXN()]))
-        let viewModel = ExchangeViewModel(service: service)
-        await viewModel.bootstrap()
-
-        viewModel.didEditUSDc("abcdef")
-        #expect(viewModel.foreignInput == "")
+        viewModel.didEditUSDc(nil)
+        #expect(viewModel.foreignAmount == nil)
     }
 
     @Test
@@ -165,15 +155,49 @@ struct ExchangeViewModelTests {
     }
 
     @Test
+    func formatted_rate_is_nil_before_load() async {
+        let service = MockRateService()
+        let viewModel = ExchangeViewModel(service: service)
+        #expect(viewModel.formattedRate == nil)
+    }
+
+    @Test
+    func formatted_rate_renders_one_usdc_to_selected_currency() async {
+        let service = MockRateService()
+        await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        let formatted = viewModel.formattedRate ?? ""
+        #expect(formatted.hasPrefix("1 USDc = "))
+        #expect(formatted.hasSuffix(" MXN"))
+    }
+
+    @Test
+    func formatted_rate_updates_after_currency_change() async {
+        let service = MockRateService()
+        await service.setCurrencyResult(.success(["MXN", "BRL"]))
+        await service.setTickerResult(.success([Self.tickerMXN()]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        await service.setTickerResult(.success([Self.tickerBRL()]))
+        await viewModel.selectCurrency(Currency.resolve("BRL"))
+
+        let formatted = viewModel.formattedRate ?? ""
+        #expect(formatted.hasSuffix(" BRL"))
+    }
+
+    @Test
     func swap_flips_visual_layout_and_active_editor_keeping_inputs_attached_to_their_currency() async {
         let service = MockRateService()
         await service.setTickerResult(.success([Self.tickerMXN()]))
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.didEditUSDc("10")
-        let usdcBefore = viewModel.usdcInput
-        let foreignBefore = viewModel.foreignInput
+        viewModel.didEditUSDc(Decimal(10))
+        let usdcBefore = viewModel.usdcAmount
+        let foreignBefore = viewModel.foreignAmount
         #expect(viewModel.usdcOnTop)
         #expect(viewModel.activeEditor == .fromUSDc)
 
@@ -181,8 +205,8 @@ struct ExchangeViewModelTests {
 
         #expect(viewModel.usdcOnTop == false)
         #expect(viewModel.activeEditor == .toUSDc)
-        #expect(viewModel.usdcInput == usdcBefore)
-        #expect(viewModel.foreignInput == foreignBefore)
+        #expect(viewModel.usdcAmount == usdcBefore)
+        #expect(viewModel.foreignAmount == foreignBefore)
 
         viewModel.swap()
         #expect(viewModel.usdcOnTop == true)

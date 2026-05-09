@@ -1,7 +1,7 @@
 import Foundation
 
 enum CurrencyCatalog {
-    static let fallbackCodes: [String] = ["MXN", "ARS", "BRL", "COP"]
+    static var fallbackCodes: [String] { Currency.fallbackCodes }
 
     static func load(using service: any RateService) async -> [String] {
         do {

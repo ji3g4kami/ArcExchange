@@ -2,37 +2,37 @@ import Foundation
 
 struct Currency: Sendable, Equatable, Hashable, Identifiable {
     let code: String
-    let displayName: String
     let flag: String
+    let flagAssetName: String?
 
     var id: String { code }
+
+    var fractionDigitLimit: Int {
+        code == "USDC" ? 6 : 2
+    }
 }
 
 extension Currency {
-    static let usdc = Currency(code: "USDC", displayName: "USD Coin", flag: "🪙")
+    static let usdc = Currency(code: "USDC", flag: "🪙", flagAssetName: "flag_USDC")
 
     static let knownByCode: [String: Currency] = [
         "USDC": .usdc,
-        "MXN":  Currency(code: "MXN",  displayName: "Mexican Peso",       flag: "🇲🇽"),
-        "ARS":  Currency(code: "ARS",  displayName: "Argentine Peso",     flag: "🇦🇷"),
-        "BRL":  Currency(code: "BRL",  displayName: "Brazilian Real",     flag: "🇧🇷"),
-        "COP":  Currency(code: "COP",  displayName: "Colombian Peso",     flag: "🇨🇴"),
-        "PEN":  Currency(code: "PEN",  displayName: "Peruvian Sol",       flag: "🇵🇪"),
-        "CLP":  Currency(code: "CLP",  displayName: "Chilean Peso",       flag: "🇨🇱"),
-        "UYU":  Currency(code: "UYU",  displayName: "Uruguayan Peso",     flag: "🇺🇾"),
-        "EUR":  Currency(code: "EUR",  displayName: "Euro",               flag: "🇪🇺"),
-        "GBP":  Currency(code: "GBP",  displayName: "British Pound",      flag: "🇬🇧")
+        "MXN":  Currency(code: "MXN",  flag: "🇲🇽", flagAssetName: "flag_MXN"),
+        "ARS":  Currency(code: "ARS",  flag: "🇦🇷", flagAssetName: "flag_ARS"),
+        "BRL":  Currency(code: "BRL",  flag: "🇧🇷", flagAssetName: "flag_BRL"),
+        "COP":  Currency(code: "COP",  flag: "🇨🇴", flagAssetName: "flag_COP"),
+        "EURC": Currency(code: "EURc", flag: "🇪🇺", flagAssetName: "flag_EURc")
     ]
 
     static func resolve(_ code: String) -> Currency {
         knownByCode[code.uppercased()] ?? Currency(
             code: code.uppercased(),
-            displayName: code.uppercased(),
-            flag: "🌐"
+            flag: "🌐",
+            flagAssetName: nil
         )
     }
 
-    static let fallbackCodes: [String] = ["MXN", "ARS", "BRL", "COP"]
+    static let fallbackCodes: [String] = ["MXN", "ARS", "BRL", "COP", "EURc"]
 
     static var fallback: [Currency] { fallbackCodes.map(Currency.resolve) }
 }

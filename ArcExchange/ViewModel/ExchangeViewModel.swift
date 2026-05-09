@@ -5,24 +5,33 @@ import Observation
 @Observable
 final class ExchangeViewModel {
     private let service: any RateService
-    private let parsingLocale: Locale
 
     var state: LoadState = .idle
     var availableCurrencies: [Currency] = Currency.fallback
     var selectedCurrency: Currency
     var rate: ExchangeRate?
-    var usdcInput: String = ""
-    var foreignInput: String = ""
+    var usdcAmount: Decimal? = nil
+    var foreignAmount: Decimal? = nil
     var activeEditor: ConversionDirection = .fromUSDc
     var lastUpdated: Date?
     var usdcOnTop: Bool = true
 
     private var refreshTask: Task<Void, Never>?
 
-    init(service: any RateService, parsingLocale: Locale = Locale(identifier: "en_US_POSIX")) {
+    init(service: any RateService) {
         self.service = service
-        self.parsingLocale = parsingLocale
         self.selectedCurrency = Currency.fallback.first ?? Currency.resolve("MXN")
+    }
+
+    var formattedRate: String? {
+        guard let mid = rate?.mid, mid > 0 else { return nil }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.usesGroupingSeparator = true
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 4
+        guard let value = formatter.string(from: mid as NSDecimalNumber) else { return nil }
+        return "1 USDc = \(value) \(selectedCurrency.code)"
     }
 
     func bootstrap() async {
@@ -78,14 +87,14 @@ final class ExchangeViewModel {
         activeEditor = (activeEditor == .fromUSDc) ? .toUSDc : .fromUSDc
     }
 
-    func didEditUSDc(_ raw: String) {
-        usdcInput = raw
+    func didEditUSDc(_ value: Decimal?) {
+        usdcAmount = value
         activeEditor = .fromUSDc
         recompute(otherFor: .fromUSDc)
     }
 
-    func didEditForeign(_ raw: String) {
-        foreignInput = raw
+    func didEditForeign(_ value: Decimal?) {
+        foreignAmount = value
         activeEditor = .toUSDc
         recompute(otherFor: .toUSDc)
     }
@@ -102,19 +111,17 @@ final class ExchangeViewModel {
         guard let mid = rate?.mid, mid > 0 else { return }
         switch active {
         case .fromUSDc:
-            guard let amount = DecimalFormatting.parse(usdcInput, locale: parsingLocale) else {
-                foreignInput = ""
+            guard let amount = usdcAmount else {
+                foreignAmount = nil
                 return
             }
-            let value = CurrencyConverter.convert(amount: amount, mid: mid, direction: .fromUSDc)
-            foreignInput = DecimalFormatting.display(value, locale: parsingLocale)
+            foreignAmount = CurrencyConverter.convert(amount: amount, mid: mid, direction: .fromUSDc)
         case .toUSDc:
-            guard let amount = DecimalFormatting.parse(foreignInput, locale: parsingLocale) else {
-                usdcInput = ""
+            guard let amount = foreignAmount else {
+                usdcAmount = nil
                 return
             }
-            let value = CurrencyConverter.convert(amount: amount, mid: mid, direction: .toUSDc)
-            usdcInput = DecimalFormatting.display(value, locale: parsingLocale)
+            usdcAmount = CurrencyConverter.convert(amount: amount, mid: mid, direction: .toUSDc)
         }
     }
 

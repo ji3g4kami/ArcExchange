@@ -11,13 +11,13 @@ struct SwapButton: View {
             }
             action()
         } label: {
-            Image(systemName: "arrow.up.arrow.down")
-                .font(.system(size: 18, weight: .bold))
+            Image(systemName: "arrow.down")
+                .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(
-                    Circle().fill(Color.accentColor)
-                )
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(Color.brandGreen))
+                .padding(4)
+                .background(Circle().fill(Color.pageBackground))
                 .rotationEffect(.degrees(rotation))
         }
         .buttonStyle(.plain)

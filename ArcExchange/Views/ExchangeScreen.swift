@@ -6,7 +6,7 @@ struct ExchangeScreen: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            backgroundGradient.ignoresSafeArea()
+            Color.pageBackground.ignoresSafeArea()
             ScrollView {
                 content
             }
@@ -35,15 +35,18 @@ struct ExchangeScreen: View {
         VStack(spacing: 16) {
             header
 
-            VStack(spacing: 12) {
-                if viewModel.usdcOnTop {
-                    usdcRow
-                    swapBar
-                    foreignRow
-                } else {
-                    foreignRow
-                    swapBar
-                    usdcRow
+            ZStack {
+                VStack(spacing: 8) {
+                    if viewModel.usdcOnTop {
+                        usdcRow
+                        foreignRow
+                    } else {
+                        foreignRow
+                        usdcRow
+                    }
+                }
+                SwapButton {
+                    viewModel.swap()
                 }
             }
             .padding(.top, 8)
@@ -67,7 +70,7 @@ struct ExchangeScreen: View {
 
             Spacer(minLength: 40)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.top, 24)
         .animation(.snappy(duration: 0.3), value: viewModel.usdcOnTop)
     }
@@ -75,7 +78,7 @@ struct ExchangeScreen: View {
     private var usdcRow: some View {
         CurrencyFieldView(
             currency: .usdc,
-            amount: $viewModel.usdcInput,
+            amount: $viewModel.usdcAmount,
             labelIdentifier: A11yID.usdcLabel,
             fieldIdentifier: A11yID.usdcField,
             onCurrencyTap: nil,
@@ -86,7 +89,7 @@ struct ExchangeScreen: View {
     private var foreignRow: some View {
         CurrencyFieldView(
             currency: viewModel.selectedCurrency,
-            amount: $viewModel.foreignInput,
+            amount: $viewModel.foreignAmount,
             labelIdentifier: A11yID.foreignLabel,
             fieldIdentifier: A11yID.foreignField,
             onCurrencyTap: { showPicker = true },
@@ -94,33 +97,26 @@ struct ExchangeScreen: View {
         )
     }
 
-    private var swapBar: some View {
-        ZStack {
-            Divider()
-            SwapButton {
-                viewModel.swap()
-            }
-        }
-    }
-
     private var header: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Exchange")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                Text("Convert USDc to your local currency")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Exchange calculator")
+                    .font(.system(size: 30, weight: .bold))
+                    .kerning(-0.6)
+                    .foregroundStyle(Color.primary)
+                if let formatted = viewModel.formattedRate {
+                    Text(formatted)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color.brandGreen)
+                        .accessibilityIdentifier(A11yID.rateLine)
+                }
             }
             Spacer()
         }
     }
+}
 
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: [Color(uiColor: .systemBackground), Color.accentColor.opacity(0.08)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
+extension Color {
+    static let brandGreen = Color(red: 0x22 / 255, green: 0xD0 / 255, blue: 0x81 / 255)
+    static let pageBackground = Color(red: 0xF8 / 255, green: 0xF8 / 255, blue: 0xF8 / 255)
 }
