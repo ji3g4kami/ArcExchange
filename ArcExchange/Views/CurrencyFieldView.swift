@@ -76,8 +76,10 @@ struct CurrencyFieldView: View {
                 .frame(width: 20, height: 20)
                 .clipShape(Circle())
         } else {
-            Text(currency.flag)
-                .font(.system(size: 16))
+            Image(systemName: "globe")
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+                .frame(width: 20, height: 20)
         }
     }
 }

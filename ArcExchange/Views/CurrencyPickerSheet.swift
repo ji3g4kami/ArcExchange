@@ -82,8 +82,9 @@ struct CurrencyPickerSheet: View {
                     .frame(width: 28, height: 28)
                     .clipShape(Circle())
             } else {
-                Text(currency.flag)
-                    .font(.system(size: 22))
+                Image(systemName: "globe")
+                    .font(.system(size: 18))
+                    .foregroundStyle(.secondary)
             }
         }
         .frame(width: 40, height: 40)
