@@ -4,6 +4,8 @@ import Observation
 @MainActor
 @Observable
 final class ExchangeViewModel {
+    static let maxAmount = Decimal(string: "999999999999")!
+
     private let service: any RateService
 
     var state: LoadState = .idle
@@ -67,6 +69,7 @@ final class ExchangeViewModel {
                   ?? tickers.first,
                   let newRate = ExchangeRate(ticker: ticker) else {
                 state = .failed("No rate available")
+                clearAmountsIfNoRate()
                 return
             }
             rate = newRate
@@ -77,6 +80,7 @@ final class ExchangeViewModel {
             return
         } catch {
             state = .failed(humanReadable(error))
+            clearAmountsIfNoRate()
         }
     }
 
@@ -94,6 +98,7 @@ final class ExchangeViewModel {
     }
 
     func didEditUSDc(_ value: Decimal?) {
+        if let value, value > Self.maxAmount { return }
         guard value != usdcAmount else { return }
         usdcAmount = value
         activeEditor = .fromUSDc
@@ -101,6 +106,7 @@ final class ExchangeViewModel {
     }
 
     func didEditForeign(_ value: Decimal?) {
+        if let value, value > Self.maxAmount { return }
         guard value != foreignAmount else { return }
         foreignAmount = value
         activeEditor = .toUSDc
@@ -113,6 +119,12 @@ final class ExchangeViewModel {
 
     private func recomputeFromActiveEditor() {
         recompute(otherFor: activeEditor)
+    }
+
+    private func clearAmountsIfNoRate() {
+        guard rate == nil else { return }
+        if usdcAmount != nil { usdcAmount = nil }
+        if foreignAmount != nil { foreignAmount = nil }
     }
 
     private func recompute(otherFor active: ConversionDirection) {

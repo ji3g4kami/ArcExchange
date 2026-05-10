@@ -85,7 +85,7 @@ struct ExchangeScreen: View {
             labelIdentifier: A11yID.usdcLabel,
             fieldIdentifier: A11yID.usdcField,
             onCurrencyTap: nil,
-            onAmountChange: { _ in }
+            isInputDisabled: viewModel.rate == nil
         )
     }
 
@@ -99,7 +99,7 @@ struct ExchangeScreen: View {
             labelIdentifier: A11yID.foreignLabel,
             fieldIdentifier: A11yID.foreignField,
             onCurrencyTap: { showPicker = true },
-            onAmountChange: { _ in }
+            isInputDisabled: viewModel.rate == nil
         )
     }
 
@@ -122,3 +122,29 @@ struct ExchangeScreen: View {
     }
 }
 
+#Preview("Loaded") {
+    ExchangeScreen(viewModel: .previewLoaded)
+}
+
+#Preview("Loaded · Dark") {
+    ExchangeScreen(viewModel: .previewLoaded)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Failed") {
+    ExchangeScreen(viewModel: .previewFailed)
+}
+
+#Preview("Failed · Dark") {
+    ExchangeScreen(viewModel: .previewFailed)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Loading") {
+    ExchangeScreen(viewModel: .previewLoading)
+}
+
+#Preview("Loading · Dark") {
+    ExchangeScreen(viewModel: .previewLoading)
+        .preferredColorScheme(.dark)
+}

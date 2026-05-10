@@ -175,6 +175,26 @@ struct ExchangeViewModelTests {
     }
 
     @Test
+    func failed_currency_switch_clears_typed_amounts() async {
+        let service = MockRateService()
+        await service.setCurrencyResult(.success(["MXN", "BRL"]))
+        await service.setTickerResult(.success([Self.tickerMXN()]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        viewModel.didEditUSDc(Decimal(10))
+        #expect(viewModel.usdcAmount != nil)
+        #expect(viewModel.foreignAmount != nil)
+
+        await service.setTickerResult(.failure(RateServiceError.http(500)))
+        await viewModel.selectCurrency(Currency.resolve("BRL"))
+
+        #expect(viewModel.rate == nil)
+        #expect(viewModel.usdcAmount == nil)
+        #expect(viewModel.foreignAmount == nil)
+    }
+
+    @Test
     func recompute_does_nothing_after_failed_currency_switch() async {
         let service = MockRateService()
         await service.setCurrencyResult(.success(["MXN", "BRL"]))
@@ -221,6 +241,51 @@ struct ExchangeViewModelTests {
 
         let formatted = viewModel.formattedRate ?? ""
         #expect(formatted.hasSuffix(" BRL"))
+    }
+
+    @Test
+    func editing_usdc_above_max_is_rejected() async {
+        let service = MockRateService()
+        await service.setTickerResult(.success([Self.tickerMXN()]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        viewModel.didEditUSDc(Decimal(50))
+        let prevForeign = viewModel.foreignAmount
+
+        let huge = ExchangeViewModel.maxAmount + 1
+        viewModel.didEditUSDc(huge)
+
+        #expect(viewModel.usdcAmount == Decimal(50))
+        #expect(viewModel.foreignAmount == prevForeign)
+    }
+
+    @Test
+    func editing_foreign_above_max_is_rejected() async {
+        let service = MockRateService()
+        await service.setTickerResult(.success([Self.tickerMXN()]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        viewModel.didEditForeign(Decimal(50))
+        let prevUsdc = viewModel.usdcAmount
+
+        let huge = ExchangeViewModel.maxAmount + 1
+        viewModel.didEditForeign(huge)
+
+        #expect(viewModel.foreignAmount == Decimal(50))
+        #expect(viewModel.usdcAmount == prevUsdc)
+    }
+
+    @Test
+    func editing_at_exact_max_is_accepted() async {
+        let service = MockRateService()
+        await service.setTickerResult(.success([Self.tickerMXN()]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        viewModel.didEditUSDc(ExchangeViewModel.maxAmount)
+        #expect(viewModel.usdcAmount == ExchangeViewModel.maxAmount)
     }
 
     @Test

@@ -109,3 +109,21 @@ struct CurrencyPickerSheet: View {
     }
 }
 
+#Preview {
+    @Previewable @State var selected = Currency.resolve("MXN")
+    CurrencyPickerSheet(
+        currencies: Currency.fallback,
+        selected: selected,
+        onSelect: { selected = $0 }
+    )
+}
+
+#Preview("Dark") {
+    @Previewable @State var selected = Currency.resolve("BRL")
+    CurrencyPickerSheet(
+        currencies: Currency.fallback,
+        selected: selected,
+        onSelect: { selected = $0 }
+    )
+    .preferredColorScheme(.dark)
+}

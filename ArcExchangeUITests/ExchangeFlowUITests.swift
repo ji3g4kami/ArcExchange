@@ -154,6 +154,45 @@ final class ExchangeFlowUITests: XCTestCase {
         wait(for: [gone], timeout: 5)
     }
 
+    func test_failed_currency_switch_clears_amounts_and_disables_input() {
+        let app = makeApp(launchArgs: ["-UITestStubSucceedThenFail", "1"])
+        app.launch()
+
+        waitForRateLine(in: app)
+
+        let usdcField = app.textFields["amount.usdc"].firstMatch
+        XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
+        usdcField.tap()
+        usdcField.typeText("10")
+
+        let foreignField = app.textFields["amount.foreign"].firstMatch
+        let populated = NSPredicate(format: "value != '' AND value != '0'")
+        wait(for: [expectation(for: populated, evaluatedWith: foreignField)], timeout: 5)
+
+        let foreignLabel = app.buttons["label.foreign"].firstMatch
+        XCTAssertTrue(foreignLabel.waitForExistence(timeout: 5))
+        foreignLabel.tap()
+
+        let brlRow = app.buttons["picker.row.BRL"].firstMatch
+        XCTAssertTrue(brlRow.waitForExistence(timeout: 5))
+        brlRow.tap()
+
+        let retry = app.buttons["button.retry"].firstMatch
+        XCTAssertTrue(retry.waitForExistence(timeout: 5), "Retry should appear after failed switch")
+
+        let cleared = NSPredicate(format: "value == '0' OR value == ''")
+        wait(for: [
+            expectation(for: cleared, evaluatedWith: usdcField),
+            expectation(for: cleared, evaluatedWith: foreignField)
+        ], timeout: 5)
+
+        let disabled = NSPredicate(format: "isEnabled == false")
+        wait(for: [
+            expectation(for: disabled, evaluatedWith: usdcField),
+            expectation(for: disabled, evaluatedWith: foreignField)
+        ], timeout: 5)
+    }
+
     func test_network_failure_shows_error_banner_with_retry() {
         let app = makeApp(launchArgs: ["-UITestStubFailure", "1"])
         app.launch()

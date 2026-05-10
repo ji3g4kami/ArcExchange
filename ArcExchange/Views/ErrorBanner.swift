@@ -38,3 +38,22 @@ struct ErrorBanner: View {
         .onTapGesture(count: 2) { onDismiss() }
     }
 }
+
+#Preview {
+    ErrorBanner(
+        message: "Network unavailable",
+        onRetry: {},
+        onDismiss: {}
+    )
+    .padding()
+}
+
+#Preview("Dark") {
+    ErrorBanner(
+        message: "Network unavailable",
+        onRetry: {},
+        onDismiss: {}
+    )
+    .padding()
+    .preferredColorScheme(.dark)
+}

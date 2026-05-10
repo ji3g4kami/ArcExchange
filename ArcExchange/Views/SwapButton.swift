@@ -25,3 +25,14 @@ struct SwapButton: View {
         .accessibilityLabel("Swap currencies")
     }
 }
+
+#Preview {
+    SwapButton {}
+        .padding()
+}
+
+#Preview("Dark") {
+    SwapButton {}
+        .padding()
+        .preferredColorScheme(.dark)
+}
