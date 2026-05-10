@@ -21,11 +21,11 @@ struct CurrencyFieldView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
-                    if onCurrencyTap != nil {
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.secondary)
-                    }
+                        .frame(width: 50, alignment: .leading)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .opacity(onCurrencyTap == nil ? 0 : 1)
                 }
                 .fixedSize()
             }

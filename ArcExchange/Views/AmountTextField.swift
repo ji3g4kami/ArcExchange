@@ -83,7 +83,8 @@ struct AmountTextField: UIViewRepresentable {
             let proposed = oldText.replacingCharacters(in: oldRange, with: string)
 
             let sanitized = AmountInput.sanitize(proposed)
-            let limited = AmountInput.limitFraction(sanitized, max: parent.fractionDigitLimit)
+            let fractionLimited = AmountInput.limitFraction(sanitized, max: parent.fractionDigitLimit)
+            let limited = AmountInput.limitInteger(fractionLimited, max: AmountInput.maxIntegerDigits)
 
             let insertEndOffset = range.location + (string as NSString).length
             let safeOffset = min(insertEndOffset, proposed.count)
@@ -127,7 +128,7 @@ final class AmountInputContainerView: UIView {
 
     private let baseFontSize: CGFloat = 16
     private let minFontSize: CGFloat = 10
-    private let spacing: CGFloat = 2
+    private let spacing: CGFloat = 0
     private var savedTintColor: UIColor?
 
     override init(frame: CGRect) {

@@ -314,6 +314,22 @@ final class ExchangeFlowUITests: XCTestCase {
                                  "Editing field with long value must not overflow the screen")
     }
 
+    func test_input_caps_at_max_integer_digits() {
+        let app = makeApp()
+        app.launch()
+        waitForRateLine(in: app)
+
+        let usdcField = amountElement("amount.usdc", in: app)
+        XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
+        usdcField.tap()
+        usdcField.typeText(String(repeating: "1", count: 35))
+
+        let value = (usdcField.value as? String) ?? ""
+        let digitsOnly = value.filter { $0.isNumber }
+        XCTAssertEqual(digitsOnly, String(repeating: "1", count: 30),
+                       "USDc field should cap input at 30 integer digits — got \(digitsOnly.count)")
+    }
+
     func test_network_failure_shows_error_banner_with_retry() {
         let app = makeApp(launchArgs: ["-UITestStubFailure", "1"])
         app.launch()

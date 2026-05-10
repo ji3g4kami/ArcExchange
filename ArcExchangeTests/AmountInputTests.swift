@@ -144,6 +144,28 @@ struct AmountInputTests {
         #expect(AmountInput.limitFraction("123.", max: 2) == "123.")
     }
 
+    // MARK: - limitInteger
+
+    @Test
+    func limitInteger_under_or_at_cap_unchanged() {
+        #expect(AmountInput.limitInteger("123", max: 5) == "123")
+        #expect(AmountInput.limitInteger("12345", max: 5) == "12345")
+        #expect(AmountInput.limitInteger("12345.67", max: 5) == "12345.67")
+    }
+
+    @Test
+    func limitInteger_over_cap_clipped() {
+        #expect(AmountInput.limitInteger("1234567", max: 5) == "12345")
+        #expect(AmountInput.limitInteger("1234567890", max: 3) == "123")
+    }
+
+    @Test
+    func limitInteger_with_decimal_clips_only_integer_part() {
+        #expect(AmountInput.limitInteger("1234567.89", max: 5) == "12345.89")
+        #expect(AmountInput.limitInteger("999999999.42", max: 6) == "999999.42")
+        #expect(AmountInput.limitInteger("12.345", max: 5) == "12.345")
+    }
+
     // MARK: - logicalCursor / displayCursorOffset
 
     @Test

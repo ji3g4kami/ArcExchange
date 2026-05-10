@@ -2,6 +2,13 @@ import Foundation
 
 enum AmountInput {
 
+    /// `Decimal` has a 128-bit (~38-digit) mantissa, so `amount × rate` loses
+    /// precision once the input plus the rate's significant digits exceed it.
+    /// We cap the integer portion of the entered amount well under that
+    /// ceiling so the converted column always renders exact digits — never
+    /// zero-padded tails.
+    static let maxIntegerDigits = 30
+
     static func sanitize(_ raw: String) -> String {
         var seenDot = false
         var out = ""
@@ -47,6 +54,19 @@ enum AmountInput {
         if fractionLen <= max { return text }
         let clip = text.index(afterDot, offsetBy: max)
         return String(text[..<clip])
+    }
+
+    static func limitInteger(_ text: String, max: Int) -> String {
+        let dotIdx = text.firstIndex(of: ".")
+        let integerEnd = dotIdx ?? text.endIndex
+        let integerLen = text.distance(from: text.startIndex, to: integerEnd)
+        if integerLen <= max { return text }
+        let clip = text.index(text.startIndex, offsetBy: max)
+        let trimmedInteger = String(text[..<clip])
+        if let dotIdx {
+            return trimmedInteger + String(text[dotIdx...])
+        }
+        return trimmedInteger
     }
 
     static func logicalCursor(in text: String) -> Int {
