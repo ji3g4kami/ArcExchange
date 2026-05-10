@@ -39,7 +39,7 @@ private struct StubFailingService: RateService {
     }
 }
 
-private func makeStubTickers(for currencyCodes: [String]) -> [Ticker] {
+nonisolated private func makeStubTickers(for currencyCodes: [String]) -> [Ticker] {
     currencyCodes.map { code in
         Ticker(
             ask: Decimal(string: "20.5")!,

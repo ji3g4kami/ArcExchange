@@ -1,6 +1,6 @@
 import Foundation
 
-struct LiveRateService: RateService {
+nonisolated struct LiveRateService: RateService {
     let session: URLSession
     let baseURL: URL
 

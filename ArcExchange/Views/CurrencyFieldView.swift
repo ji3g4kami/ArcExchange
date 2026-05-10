@@ -47,7 +47,7 @@ struct CurrencyFieldView: View {
                     )
                     .disabled(isInputDisabled)
                 } else {
-                    (Text("$") + Text(displayedAmount))
+                    Text("$\(displayedAmount)")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(amount == nil ? Color.secondary : Color.primary)
                         .lineLimit(1)

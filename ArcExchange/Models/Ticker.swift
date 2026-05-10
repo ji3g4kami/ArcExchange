@@ -1,6 +1,6 @@
 import Foundation
 
-struct Ticker: Sendable, Equatable {
+nonisolated struct Ticker: Sendable, Equatable {
     let ask: Decimal
     let bid: Decimal
     let book: String
