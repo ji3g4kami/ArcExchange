@@ -123,10 +123,12 @@ struct AmountTextField: UIViewRepresentable {
 final class AmountInputContainerView: UIView {
     let dollarLabel = UILabel()
     let textField = UITextField()
+    let truncatedLabel = UILabel()
 
     private let baseFontSize: CGFloat = 16
     private let minFontSize: CGFloat = 10
     private let spacing: CGFloat = 2
+    private var savedTintColor: UIColor?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -153,6 +155,14 @@ final class AmountInputContainerView: UIView {
         textField.borderStyle = .none
         textField.backgroundColor = .clear
         addSubview(textField)
+
+        truncatedLabel.font = baseFont
+        truncatedLabel.textColor = .label
+        truncatedLabel.textAlignment = .left
+        truncatedLabel.lineBreakMode = .byTruncatingMiddle
+        truncatedLabel.isHidden = true
+        truncatedLabel.isUserInteractionEnabled = false
+        addSubview(truncatedLabel)
     }
 
     func applyEmptyState(_ isEmpty: Bool) {
@@ -196,17 +206,50 @@ final class AmountInputContainerView: UIView {
         let scaledFont = UIFont.systemFont(ofSize: scaledFontSize, weight: .bold)
         if dollarLabel.font.pointSize != scaledFontSize { dollarLabel.font = scaledFont }
         if textField.font?.pointSize != scaledFontSize { textField.font = scaledFont }
+        if truncatedLabel.font.pointSize != scaledFontSize { truncatedLabel.font = scaledFont }
 
         let (scaledDollarWidth, scaledDigitsWidth) = widths(at: scaledFontSize)
         let totalScaled = scaledDollarWidth + spacing + scaledDigitsWidth
-        let leadingX = max(0, bounds.width - totalScaled)
+        let needsTruncation = totalScaled > availableWidth + 0.5
 
-        dollarLabel.frame = CGRect(x: leadingX, y: 0, width: scaledDollarWidth, height: bounds.height)
-        textField.frame = CGRect(
-            x: leadingX + scaledDollarWidth + spacing,
-            y: 0,
-            width: max(0, bounds.width - leadingX - scaledDollarWidth - spacing),
-            height: bounds.height
-        )
+        if needsTruncation {
+            // Span the full width: $ at the leading edge, digits middle-truncated to fill the rest.
+            dollarLabel.frame = CGRect(x: 0, y: 0, width: scaledDollarWidth, height: bounds.height)
+            let digitsFrame = CGRect(
+                x: scaledDollarWidth + spacing,
+                y: 0,
+                width: max(0, availableWidth - scaledDollarWidth - spacing),
+                height: bounds.height
+            )
+            textField.frame = digitsFrame
+            truncatedLabel.frame = digitsFrame
+            truncatedLabel.text = textField.text
+            truncatedLabel.isHidden = false
+            if textField.textColor != .clear {
+                textField.textColor = .clear
+            }
+            if textField.tintColor != .clear {
+                savedTintColor = textField.tintColor
+                textField.tintColor = .clear
+            }
+        } else {
+            // Both fit at the (possibly scaled) font: pin both to the trailing edge.
+            let leadingX = max(0, availableWidth - totalScaled)
+            dollarLabel.frame = CGRect(x: leadingX, y: 0, width: scaledDollarWidth, height: bounds.height)
+            textField.frame = CGRect(
+                x: leadingX + scaledDollarWidth + spacing,
+                y: 0,
+                width: max(0, availableWidth - leadingX - scaledDollarWidth - spacing),
+                height: bounds.height
+            )
+            truncatedLabel.isHidden = true
+            if textField.textColor != .label {
+                textField.textColor = .label
+            }
+            if let saved = savedTintColor {
+                textField.tintColor = saved
+                savedTintColor = nil
+            }
+        }
     }
 }
