@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ExchangeScreen: View {
     @Bindable var viewModel: ExchangeViewModel
@@ -78,29 +79,32 @@ struct ExchangeScreen: View {
     private var usdcRow: some View {
         CurrencyFieldView(
             currency: .usdc,
-            amount: Binding(
-                get: { viewModel.usdcAmount },
-                set: { viewModel.didEditUSDc($0) }
-            ),
+            amount: $viewModel.usdcAmount,
             labelIdentifier: A11yID.usdcLabel,
             fieldIdentifier: A11yID.usdcField,
             onCurrencyTap: nil,
-            isInputDisabled: viewModel.rate == nil
+            isInputDisabled: viewModel.rate == nil,
+            onUserEdit: { viewModel.userEditedUSDc() }
         )
     }
 
     private var foreignRow: some View {
         CurrencyFieldView(
             currency: viewModel.selectedCurrency,
-            amount: Binding(
-                get: { viewModel.foreignAmount },
-                set: { viewModel.didEditForeign($0) }
-            ),
+            amount: $viewModel.foreignAmount,
             labelIdentifier: A11yID.foreignLabel,
             fieldIdentifier: A11yID.foreignField,
-            onCurrencyTap: { showPicker = true },
-            isInputDisabled: viewModel.rate == nil
+            onCurrencyTap: { openPicker() },
+            isInputDisabled: viewModel.rate == nil,
+            onUserEdit: { viewModel.userEditedForeign() }
         )
+    }
+
+    private func openPicker() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+        )
+        showPicker = true
     }
 
     private var header: some View {

@@ -80,7 +80,8 @@ struct ExchangeViewModelTests {
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.didEditUSDc(Decimal(10))
+        viewModel.usdcAmount = Decimal(10)
+        viewModel.userEditedUSDc()
 
         let mid: Decimal = (Decimal(20) + Decimal(18)) / 2
         let expected = Decimal(10) * mid
@@ -96,7 +97,8 @@ struct ExchangeViewModelTests {
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.didEditForeign(Decimal(190))
+        viewModel.foreignAmount = Decimal(190)
+        viewModel.userEditedForeign()
 
         let mid: Decimal = (Decimal(20) + Decimal(18)) / 2
         let expectedUsdc = Decimal(190) / mid
@@ -112,10 +114,12 @@ struct ExchangeViewModelTests {
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.didEditUSDc(Decimal(10))
+        viewModel.usdcAmount = Decimal(10)
+        viewModel.userEditedUSDc()
         #expect(viewModel.foreignAmount != nil)
 
-        viewModel.didEditUSDc(nil)
+        viewModel.usdcAmount = nil
+        viewModel.userEditedUSDc()
         #expect(viewModel.foreignAmount == nil)
     }
 
@@ -182,7 +186,8 @@ struct ExchangeViewModelTests {
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.didEditUSDc(Decimal(10))
+        viewModel.usdcAmount = Decimal(10)
+        viewModel.userEditedUSDc()
         #expect(viewModel.usdcAmount != nil)
         #expect(viewModel.foreignAmount != nil)
 
@@ -205,7 +210,8 @@ struct ExchangeViewModelTests {
         await service.setTickerResult(.failure(RateServiceError.transport("offline")))
         await viewModel.selectCurrency(Currency.resolve("BRL"))
 
-        viewModel.didEditUSDc(Decimal(10))
+        viewModel.usdcAmount = Decimal(10)
+        viewModel.userEditedUSDc()
         #expect(viewModel.foreignAmount == nil)
     }
 
@@ -250,7 +256,8 @@ struct ExchangeViewModelTests {
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.didEditUSDc(Decimal(10))
+        viewModel.usdcAmount = Decimal(10)
+        viewModel.userEditedUSDc()
         let usdcBefore = viewModel.usdcAmount
         let foreignBefore = viewModel.foreignAmount
         #expect(viewModel.usdcOnTop)

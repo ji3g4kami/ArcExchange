@@ -7,8 +7,7 @@ struct CurrencyFieldView: View {
     let fieldIdentifier: String
     let onCurrencyTap: (() -> Void)?
     var isInputDisabled: Bool = false
-
-    @State private var isFocused: Bool = false
+    var onUserEdit: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -35,48 +34,21 @@ struct CurrencyFieldView: View {
 
             Spacer(minLength: 8)
 
-            Group {
-                if isFocused {
-                    AmountTextField(
-                        amount: $amount,
-                        isFocused: $isFocused,
-                        fractionDigitLimit: currency.fractionDigitLimit,
-                        placeholder: "0",
-                        isEnabled: !isInputDisabled,
-                        accessibilityIdentifier: fieldIdentifier
-                    )
-                    .disabled(isInputDisabled)
-                } else {
-                    Text("$\(displayedAmount)")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(amount == nil ? Color.secondary : Color.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(10.0 / 16.0)
-                        .truncationMode(.middle)
-                        .multilineTextAlignment(.trailing)
-                        .contentShape(Rectangle())
-                        .accessibilityIdentifier(fieldIdentifier)
-                        .accessibilityValue(displayedAmount)
-                        .disabled(isInputDisabled)
-                        .onTapGesture {
-                            if !isInputDisabled { isFocused = true }
-                        }
-                }
-            }
+            AmountTextField(
+                amount: $amount,
+                fractionDigitLimit: currency.fractionDigitLimit,
+                placeholder: "0",
+                isEnabled: !isInputDisabled,
+                accessibilityIdentifier: fieldIdentifier,
+                onUserEdit: onUserEdit
+            )
+            .disabled(isInputDisabled)
             .frame(maxWidth: .infinity, alignment: .trailing)
             .opacity(isInputDisabled ? 0.4 : 1)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 22)
         .background(Color("CardBackground"), in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    private var displayedAmount: String {
-        let text = AmountInput.displayGrouped(
-            forAmount: amount,
-            fractionDigitLimit: currency.fractionDigitLimit
-        )
-        return text.isEmpty ? "0" : text
     }
 
     @ViewBuilder

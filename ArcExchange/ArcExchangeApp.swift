@@ -5,12 +5,13 @@ struct ArcExchangeApp: App {
     @State private var viewModel: ExchangeViewModel
 
     init() {
+        let service: any RateService
+        #if DEBUG
         let args = ProcessInfo.processInfo.arguments
         func isFlagEnabled(_ key: String) -> Bool {
             guard let index = args.firstIndex(of: key), index + 1 < args.count else { return false }
             return args[index + 1] == "1"
         }
-        let service: any RateService
         if isFlagEnabled("-UITestStubFailure") {
             service = StubFailingService()
         } else if isFlagEnabled("-UITestStubSucceedThenFail") {
@@ -20,6 +21,9 @@ struct ArcExchangeApp: App {
         } else {
             service = LiveRateService()
         }
+        #else
+        service = LiveRateService()
+        #endif
         _viewModel = State(initialValue: ExchangeViewModel(service: service))
     }
 
@@ -30,6 +34,7 @@ struct ArcExchangeApp: App {
     }
 }
 
+#if DEBUG
 private struct StubFailingService: RateService {
     func tickers(for currencyCodes: [String]) async throws -> [Ticker] {
         throw RateServiceError.transport("Stub: forced failure")
@@ -68,3 +73,4 @@ private struct StubSuccessService: RateService {
     }
     func availableCurrencies() async throws -> [String] { Currency.fallbackCodes }
 }
+#endif

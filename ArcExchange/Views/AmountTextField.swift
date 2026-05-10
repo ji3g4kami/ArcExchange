@@ -3,11 +3,11 @@ import UIKit
 
 struct AmountTextField: UIViewRepresentable {
     @Binding var amount: Decimal?
-    @Binding var isFocused: Bool
     let fractionDigitLimit: Int
     let placeholder: String
     let isEnabled: Bool
     let accessibilityIdentifier: String?
+    var onUserEdit: (() -> Void)? = nil
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -44,11 +44,6 @@ struct AmountTextField: UIViewRepresentable {
             }
         }
         container.applyEmptyState(amount == nil)
-        if isFocused && !container.textField.isFirstResponder {
-            container.textField.becomeFirstResponder()
-        } else if !isFocused && container.textField.isFirstResponder {
-            container.textField.resignFirstResponder()
-        }
     }
 
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: AmountInputContainerView, context: Context) -> CGSize? {
@@ -63,14 +58,6 @@ struct AmountTextField: UIViewRepresentable {
 
         init(parent: AmountTextField) {
             self.parent = parent
-        }
-
-        func textFieldDidBeginEditing(_ textField: UITextField) {
-            if !parent.isFocused { parent.isFocused = true }
-        }
-
-        func textFieldDidEndEditing(_ textField: UITextField) {
-            if parent.isFocused { parent.isFocused = false }
         }
 
         func textField(
@@ -114,6 +101,7 @@ struct AmountTextField: UIViewRepresentable {
             let parsed = AmountInput.parse(limited)
             if parsed != parent.amount {
                 parent.amount = parsed
+                parent.onUserEdit?()
             }
             return false
         }

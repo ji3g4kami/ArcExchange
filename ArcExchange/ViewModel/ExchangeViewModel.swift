@@ -95,16 +95,12 @@ final class ExchangeViewModel {
         activeEditor = (activeEditor == .fromUSDc) ? .toUSDc : .fromUSDc
     }
 
-    func didEditUSDc(_ value: Decimal?) {
-        guard value != usdcAmount else { return }
-        usdcAmount = value
+    func userEditedUSDc() {
         activeEditor = .fromUSDc
         recompute(otherFor: .fromUSDc)
     }
 
-    func didEditForeign(_ value: Decimal?) {
-        guard value != foreignAmount else { return }
-        foreignAmount = value
+    func userEditedForeign() {
         activeEditor = .toUSDc
         recompute(otherFor: .toUSDc)
     }
