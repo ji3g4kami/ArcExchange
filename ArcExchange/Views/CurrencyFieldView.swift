@@ -8,6 +8,8 @@ struct CurrencyFieldView: View {
     let onCurrencyTap: (() -> Void)?
     var isInputDisabled: Bool = false
 
+    @State private var isFocused: Bool = false
+
     var body: some View {
         HStack(spacing: 12) {
             Button {
@@ -33,20 +35,35 @@ struct CurrencyFieldView: View {
 
             Spacer(minLength: 8)
 
-            HStack(spacing: 2) {
-                Text("$")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(amount == nil ? Color.secondary : Color.primary)
-                TextField("0", value: $amount, format: amountFormat)
-                    .multilineTextAlignment(.leading)
-                    .keyboardType(.decimalPad)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .fixedSize()
+            Group {
+                if isFocused {
+                    AmountTextField(
+                        amount: $amount,
+                        isFocused: $isFocused,
+                        fractionDigitLimit: currency.fractionDigitLimit,
+                        placeholder: "0",
+                        isEnabled: !isInputDisabled,
+                        accessibilityIdentifier: fieldIdentifier
+                    )
                     .disabled(isInputDisabled)
-                    .accessibilityIdentifier(fieldIdentifier)
+                } else {
+                    (Text("$") + Text(displayedAmount))
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(amount == nil ? Color.secondary : Color.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(10.0 / 16.0)
+                        .truncationMode(.middle)
+                        .multilineTextAlignment(.trailing)
+                        .contentShape(Rectangle())
+                        .accessibilityIdentifier(fieldIdentifier)
+                        .accessibilityValue(displayedAmount)
+                        .disabled(isInputDisabled)
+                        .onTapGesture {
+                            if !isInputDisabled { isFocused = true }
+                        }
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
             .opacity(isInputDisabled ? 0.4 : 1)
         }
         .padding(.horizontal, 16)
@@ -54,10 +71,12 @@ struct CurrencyFieldView: View {
         .background(Color("CardBackground"), in: RoundedRectangle(cornerRadius: 16))
     }
 
-    private var amountFormat: Decimal.FormatStyle {
-        .number
-            .precision(.fractionLength(0...currency.fractionDigitLimit))
-            .grouping(.automatic)
+    private var displayedAmount: String {
+        let text = AmountInput.displayGrouped(
+            forAmount: amount,
+            fractionDigitLimit: currency.fractionDigitLimit
+        )
+        return text.isEmpty ? "0" : text
     }
 
     @ViewBuilder
@@ -78,7 +97,7 @@ struct CurrencyFieldView: View {
 }
 
 #Preview("USDc · enabled") {
-    @Previewable @State var amount: Decimal? = 100
+    @Previewable @State var amount: Decimal? = 12345
     CurrencyFieldView(
         currency: .usdc,
         amount: $amount,
@@ -91,7 +110,7 @@ struct CurrencyFieldView: View {
 }
 
 #Preview("USDc · enabled · Dark") {
-    @Previewable @State var amount: Decimal? = 100
+    @Previewable @State var amount: Decimal? = 12345
     CurrencyFieldView(
         currency: .usdc,
         amount: $amount,
@@ -105,7 +124,7 @@ struct CurrencyFieldView: View {
 }
 
 #Preview("Foreign · enabled") {
-    @Previewable @State var amount: Decimal? = nil
+    @Previewable @State var amount: Decimal? = 227142
     CurrencyFieldView(
         currency: Currency.resolve("MXN"),
         amount: $amount,
@@ -118,7 +137,7 @@ struct CurrencyFieldView: View {
 }
 
 #Preview("Foreign · enabled · Dark") {
-    @Previewable @State var amount: Decimal? = nil
+    @Previewable @State var amount: Decimal? = 227142
     CurrencyFieldView(
         currency: Currency.resolve("MXN"),
         amount: $amount,

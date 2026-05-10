@@ -4,8 +4,6 @@ import Observation
 @MainActor
 @Observable
 final class ExchangeViewModel {
-    static let maxAmount = Decimal(string: "999999999999")!
-
     private let service: any RateService
 
     var state: LoadState = .idle
@@ -98,7 +96,6 @@ final class ExchangeViewModel {
     }
 
     func didEditUSDc(_ value: Decimal?) {
-        if let value, value > Self.maxAmount { return }
         guard value != usdcAmount else { return }
         usdcAmount = value
         activeEditor = .fromUSDc
@@ -106,7 +103,6 @@ final class ExchangeViewModel {
     }
 
     func didEditForeign(_ value: Decimal?) {
-        if let value, value > Self.maxAmount { return }
         guard value != foreignAmount else { return }
         foreignAmount = value
         activeEditor = .toUSDc

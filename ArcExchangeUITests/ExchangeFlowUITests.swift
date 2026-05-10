@@ -23,6 +23,12 @@ final class ExchangeFlowUITests: XCTestCase {
         return rateLine
     }
 
+    /// Field display swaps between Text (unfocused, middle-truncated) and TextField (focused).
+    /// `.descendants(matching: .any)` resolves to whichever is currently rendered.
+    private func amountElement(_ id: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: id).firstMatch
+    }
+
     func test_launch_shows_USDc_and_default_foreign_currency() {
         let app = makeApp()
         app.launch()
@@ -34,7 +40,7 @@ final class ExchangeFlowUITests: XCTestCase {
         XCTAssertTrue(foreignLabel.waitForExistence(timeout: 5))
         XCTAssertTrue(foreignLabel.label.contains("MXN"))
 
-        let usdcField = app.textFields["amount.usdc"].firstMatch
+        let usdcField = amountElement("amount.usdc", in: app)
         XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
     }
 
@@ -55,12 +61,12 @@ final class ExchangeFlowUITests: XCTestCase {
         app.launch()
         waitForRateLine(in: app)
 
-        let usdcField = app.textFields["amount.usdc"].firstMatch
+        let usdcField = amountElement("amount.usdc", in: app)
         XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
         usdcField.tap()
         usdcField.typeText("10")
 
-        let foreignField = app.textFields["amount.foreign"].firstMatch
+        let foreignField = amountElement("amount.foreign", in: app)
         let predicate = NSPredicate(format: "value != '' AND value != '0'")
         let expectation = expectation(for: predicate, evaluatedWith: foreignField)
         wait(for: [expectation], timeout: 5)
@@ -71,12 +77,12 @@ final class ExchangeFlowUITests: XCTestCase {
         app.launch()
         waitForRateLine(in: app)
 
-        let foreignField = app.textFields["amount.foreign"].firstMatch
+        let foreignField = amountElement("amount.foreign", in: app)
         XCTAssertTrue(foreignField.waitForExistence(timeout: 5))
         foreignField.tap()
         foreignField.typeText("200")
 
-        let usdcField = app.textFields["amount.usdc"].firstMatch
+        let usdcField = amountElement("amount.usdc", in: app)
         let predicate = NSPredicate(format: "value != '' AND value != '0'")
         let expectation = expectation(for: predicate, evaluatedWith: usdcField)
         wait(for: [expectation], timeout: 5)
@@ -103,19 +109,19 @@ final class ExchangeFlowUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        let usdcField = app.textFields["amount.usdc"].firstMatch
+        let usdcField = amountElement("amount.usdc", in: app)
         XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
 
         let usdcFrameBefore = usdcField.frame
-        let foreignField = app.textFields["amount.foreign"].firstMatch
+        let foreignField = amountElement("amount.foreign", in: app)
         let foreignFrameBefore = foreignField.frame
 
         let swap = app.buttons["button.swap"].firstMatch
         XCTAssertTrue(swap.waitForExistence(timeout: 5))
         swap.tap()
 
-        let usdcFieldAfter = app.textFields["amount.usdc"].firstMatch
-        let foreignFieldAfter = app.textFields["amount.foreign"].firstMatch
+        let usdcFieldAfter = amountElement("amount.usdc", in: app)
+        let foreignFieldAfter = amountElement("amount.foreign", in: app)
 
         let deadline = Date().addingTimeInterval(5)
         var swapped = false
@@ -160,12 +166,12 @@ final class ExchangeFlowUITests: XCTestCase {
 
         waitForRateLine(in: app)
 
-        let usdcField = app.textFields["amount.usdc"].firstMatch
+        let usdcField = amountElement("amount.usdc", in: app)
         XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
         usdcField.tap()
         usdcField.typeText("10")
 
-        let foreignField = app.textFields["amount.foreign"].firstMatch
+        let foreignField = amountElement("amount.foreign", in: app)
         let populated = NSPredicate(format: "value != '' AND value != '0'")
         wait(for: [expectation(for: populated, evaluatedWith: foreignField)], timeout: 5)
 
@@ -191,6 +197,121 @@ final class ExchangeFlowUITests: XCTestCase {
             expectation(for: disabled, evaluatedWith: usdcField),
             expectation(for: disabled, evaluatedWith: foreignField)
         ], timeout: 5)
+    }
+
+    func test_typing_letters_via_hardware_keyboard_is_ignored() {
+        let app = makeApp()
+        app.launch()
+        waitForRateLine(in: app)
+
+        let usdcField = amountElement("amount.usdc", in: app)
+        XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
+        usdcField.tap()
+        usdcField.typeText("abc123")
+
+        let predicate = NSPredicate(format: "value == '123'")
+        wait(for: [expectation(for: predicate, evaluatedWith: usdcField)], timeout: 5)
+    }
+
+    func test_typing_large_amount_shows_grouping_commas_live() {
+        let app = makeApp()
+        app.launch()
+        waitForRateLine(in: app)
+
+        let usdcField = amountElement("amount.usdc", in: app)
+        XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
+        usdcField.tap()
+        usdcField.typeText("12345")
+
+        let predicate = NSPredicate(format: "value == '12,345'")
+        wait(for: [expectation(for: predicate, evaluatedWith: usdcField)], timeout: 5)
+    }
+
+    func test_backspace_regroups_commas_live() {
+        let app = makeApp()
+        app.launch()
+        waitForRateLine(in: app)
+
+        let usdcField = amountElement("amount.usdc", in: app)
+        XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
+        usdcField.tap()
+        usdcField.typeText("12345")
+
+        let grouped = NSPredicate(format: "value == '12,345'")
+        wait(for: [expectation(for: grouped, evaluatedWith: usdcField)], timeout: 5)
+
+        usdcField.typeText(XCUIKeyboardKey.delete.rawValue)
+
+        let regrouped = NSPredicate(format: "value == '1,234'")
+        wait(for: [expectation(for: regrouped, evaluatedWith: usdcField)], timeout: 5)
+    }
+
+    func test_second_decimal_separator_is_rejected() {
+        let app = makeApp()
+        app.launch()
+        waitForRateLine(in: app)
+
+        let usdcField = amountElement("amount.usdc", in: app)
+        XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
+        usdcField.tap()
+        usdcField.typeText("1.5.6")
+
+        let predicate = NSPredicate(format: "value == '1.56'")
+        wait(for: [expectation(for: predicate, evaluatedWith: usdcField)], timeout: 5)
+    }
+
+    func test_long_amount_does_not_overflow_field_bounds() {
+        let app = makeApp()
+        app.launch()
+        waitForRateLine(in: app)
+
+        let usdcField = amountElement("amount.usdc", in: app)
+        XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
+        usdcField.tap()
+        usdcField.typeText("123456789012345678901234567890")
+
+        // Defocus by tapping the title outside any field.
+        app.staticTexts["Exchange calculator"].firstMatch.tap()
+
+        let unfocused = amountElement("amount.usdc", in: app)
+        XCTAssertTrue(unfocused.waitForExistence(timeout: 5))
+
+        // Frame must stay within the screen width.
+        XCTAssertLessThanOrEqual(unfocused.frame.maxX, app.frame.maxX,
+                                 "Long unfocused amount should not overflow the screen")
+    }
+
+    func test_dollar_sign_stays_adjacent_to_digits_while_editing() {
+        let app = makeApp()
+        app.launch()
+        waitForRateLine(in: app)
+
+        let usdcField = amountElement("amount.usdc", in: app)
+        XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
+        usdcField.tap()
+        usdcField.typeText("12")
+
+        // The editing field must size to its content, not span the full row width.
+        // If it spans the row, its leading edge sits in the left half of the screen
+        // (with $ pinned even further left). When content-sized, both $ and the
+        // digits sit together at the trailing edge — the field's minX will be
+        // well past the screen midline.
+        XCTAssertGreaterThan(usdcField.frame.minX, app.frame.midX,
+                             "Editing field should be content-sized so $ sits adjacent to digits")
+    }
+
+    func test_long_amount_while_editing_does_not_overflow_field_bounds() {
+        let app = makeApp()
+        app.launch()
+        waitForRateLine(in: app)
+
+        let usdcField = amountElement("amount.usdc", in: app)
+        XCTAssertTrue(usdcField.waitForExistence(timeout: 5))
+        usdcField.tap()
+        usdcField.typeText("123456789012345678901234567890")
+
+        XCTAssertLessThanOrEqual(usdcField.frame.maxX, app.frame.maxX,
+                                 "Editing field with long value must not overflow the screen")
     }
 
     func test_network_failure_shows_error_banner_with_retry() {
