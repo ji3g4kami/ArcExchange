@@ -29,18 +29,30 @@ struct AmountTextField: UIViewRepresentable {
 
     func updateUIView(_ container: AmountInputContainerView, context: Context) {
         context.coordinator.parent = self
-        container.textField.isEnabled = isEnabled
-        container.textField.placeholder = placeholder
-        container.textField.accessibilityIdentifier = accessibilityIdentifier
+        if container.textField.isEnabled != isEnabled {
+            container.textField.isEnabled = isEnabled
+        }
+        if container.textField.placeholder != placeholder {
+            container.textField.placeholder = placeholder
+        }
+        if container.textField.accessibilityIdentifier != accessibilityIdentifier {
+            container.textField.accessibilityIdentifier = accessibilityIdentifier
+        }
         if !container.textField.isEditing {
-            let target = AmountInput.displayGrouped(
-                forAmount: amount,
-                fractionDigitLimit: fractionDigitLimit
-            )
-            if container.textField.text != target {
-                container.textField.text = target
-                container.invalidateIntrinsicContentSize()
-                container.setNeedsLayout()
+            let cached = context.coordinator.lastFormatted
+            let needsReformat = cached?.amount != amount
+                || cached?.fractionDigitLimit != fractionDigitLimit
+            if needsReformat {
+                let target = AmountInput.displayGrouped(
+                    forAmount: amount,
+                    fractionDigitLimit: fractionDigitLimit
+                )
+                context.coordinator.lastFormatted = (amount, fractionDigitLimit, target)
+                if container.textField.text != target {
+                    container.textField.text = target
+                    container.invalidateIntrinsicContentSize()
+                    container.setNeedsLayout()
+                }
             }
         }
         container.applyEmptyState(amount == nil)
@@ -55,6 +67,7 @@ struct AmountTextField: UIViewRepresentable {
     @MainActor
     final class Coordinator: NSObject, UITextFieldDelegate {
         var parent: AmountTextField
+        var lastFormatted: (amount: Decimal?, fractionDigitLimit: Int, text: String)?
 
         init(parent: AmountTextField) {
             self.parent = parent
@@ -82,6 +95,9 @@ struct AmountTextField: UIViewRepresentable {
             let formatted = AmountInput.displayGrouped(forSanitized: limited)
             textField.text = formatted
 
+            let parsed = AmountInput.parse(limited)
+            lastFormatted = (parsed, parent.fractionDigitLimit, formatted)
+
             if let container = textField.superview as? AmountInputContainerView {
                 container.invalidateIntrinsicContentSize()
                 container.setNeedsLayout()
@@ -98,7 +114,6 @@ struct AmountTextField: UIViewRepresentable {
                 textField.selectedTextRange = textField.textRange(from: position, to: position)
             }
 
-            let parsed = AmountInput.parse(limited)
             if parsed != parent.amount {
                 parent.amount = parsed
                 parent.onUserEdit?()
@@ -118,6 +133,12 @@ final class AmountInputContainerView: UIView {
     private let minFontSize: CGFloat = 10
     private let spacing: CGFloat = 0
     private var savedTintColor: UIColor?
+
+    private struct WidthCacheKey: Hashable {
+        let digits: String
+        let fontSize: CGFloat
+    }
+    private var widthCache: [WidthCacheKey: (dollar: CGFloat, digits: CGFloat)] = [:]
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -164,10 +185,16 @@ final class AmountInputContainerView: UIView {
     }
 
     private func widths(at fontSize: CGFloat) -> (dollar: CGFloat, digits: CGFloat) {
+        let digitsText = displayedDigits()
+        let key = WidthCacheKey(digits: digitsText, fontSize: fontSize)
+        if let cached = widthCache[key] { return cached }
         let font = UIFont.systemFont(ofSize: fontSize, weight: .bold)
-        let dollar = ("$" as NSString).size(withAttributes: [.font: font]).width
-        let digits = (displayedDigits() as NSString).size(withAttributes: [.font: font]).width
-        return (ceil(dollar), ceil(digits))
+        let dollar = ceil(("$" as NSString).size(withAttributes: [.font: font]).width)
+        let digits = ceil((digitsText as NSString).size(withAttributes: [.font: font]).width)
+        if widthCache.count > 16 { widthCache.removeAll(keepingCapacity: true) }
+        let result = (dollar: dollar, digits: digits)
+        widthCache[key] = result
+        return result
     }
 
     override var intrinsicContentSize: CGSize {

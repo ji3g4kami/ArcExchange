@@ -94,15 +94,16 @@ enum AmountInput {
 
     private static func groupDigits(_ digits: String) -> String {
         guard digits.count > 3 else { return digits }
-        var result = ""
+        var reversed: [Character] = []
+        reversed.reserveCapacity(digits.count + digits.count / 3)
         var counter = 0
         for char in digits.reversed() {
             if counter > 0 && counter % 3 == 0 {
-                result.insert(",", at: result.startIndex)
+                reversed.append(",")
             }
-            result.insert(char, at: result.startIndex)
+            reversed.append(char)
             counter += 1
         }
-        return result
+        return String(reversed.reversed())
     }
 }

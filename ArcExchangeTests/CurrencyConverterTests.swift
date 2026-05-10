@@ -54,14 +54,8 @@ struct CurrencyConverterTests {
         let product = CurrencyConverter.convert(amount: amount, mid: probeMid, direction: .fromUSDc)
         let productString = "\(product)"
 
-        print("[probe] amount = \(amount)")
-        print("[probe] mid = \(probeMid)")
-        print("[probe] product = \(productString)")
-        print("[probe] product length = \(productString.count)")
-
         let integerPart = productString.split(separator: ".").first.map(String.init) ?? productString
         let trailingZeros = integerPart.reversed().prefix { $0 == "0" }.count
-        print("[probe] trailing zeros in integer part = \(trailingZeros)")
 
         #expect(trailingZeros < 5, "Got \(trailingZeros) trailing zeros — Decimal precision likely exhausted")
     }

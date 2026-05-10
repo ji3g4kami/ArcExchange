@@ -39,13 +39,18 @@ final class ExchangeViewModel {
     }
 
     func bootstrap() async {
-        let codes = await CurrencyCatalog.load(using: service)
+        async let codesFetch = CurrencyCatalog.load(using: service)
+        async let initialRefresh: Void = performRefresh(for: selectedCurrency.code)
+
+        let codes = await codesFetch
         availableCurrencies = codes.map(Currency.resolve)
+        await initialRefresh
+
         if !availableCurrencies.contains(where: { $0.code == selectedCurrency.code }),
            let first = availableCurrencies.first {
             selectedCurrency = first
+            await refresh()
         }
-        await refresh()
     }
 
     func refresh() async {
