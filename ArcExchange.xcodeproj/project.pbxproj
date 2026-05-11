@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		513EC7F92FB1E22800ACB6C1 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 513EC7F82FB1E22800ACB6C1 /* README.md */; };
 		5165F0282FAF59BC00735575 /* Requirements.md in Resources */ = {isa = PBXBuildFile; fileRef = 5165F0272FAF59BC00735575 /* Requirements.md */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		513EC7F82FB1E22800ACB6C1 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		5165EFFD2FAF56B000735575 /* ArcExchange.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ArcExchange.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5165F00A2FAF56B100735575 /* ArcExchangeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ArcExchangeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5165F0142FAF56B100735575 /* ArcExchangeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ArcExchangeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -81,6 +83,7 @@
 			isa = PBXGroup;
 			children = (
 				5165F0272FAF59BC00735575 /* Requirements.md */,
+				513EC7F82FB1E22800ACB6C1 /* README.md */,
 				5165EFFF2FAF56B000735575 /* ArcExchange */,
 				5165F00D2FAF56B100735575 /* ArcExchangeTests */,
 				5165F0172FAF56B100735575 /* ArcExchangeUITests */,
@@ -218,6 +221,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				513EC7F92FB1E22800ACB6C1 /* README.md in Resources */,
 				5165F0282FAF59BC00735575 /* Requirements.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -404,7 +408,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ND2LGZT6B5;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
@@ -441,7 +445,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ND2LGZT6B5;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
