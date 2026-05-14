@@ -4,43 +4,38 @@ import Testing
 
 struct CurrencyConverterTests {
 
-    private let bid = Decimal(string: "18.40697")!
-    private let ask = Decimal(string: "18.4105")!
+    private let rate = Decimal(string: "18.4087350")!
 
     @Test
-    func from_usdc_multiplies_by_bid() {
-        // User sells USDc; market buys at bid. Use the bid side.
-        let result = CurrencyConverter.convert(amount: Decimal(10), bid: bid, ask: ask, direction: .fromUSDc)
-        #expect(result == Decimal(10) * bid)
+    func from_usdc_multiplies_by_rate() {
+        let result = CurrencyConverter.convert(amount: Decimal(10), rate: rate, direction: .fromUSDc)
+        #expect(result == Decimal(10) * rate)
     }
 
     @Test
-    func to_usdc_divides_by_ask() {
-        // User buys USDc with foreign; market sells at ask. Use the ask side.
-        let result = CurrencyConverter.convert(amount: Decimal(184), bid: bid, ask: ask, direction: .toUSDc)
-        #expect(result == Decimal(184) / ask)
+    func to_usdc_divides_by_rate() {
+        let result = CurrencyConverter.convert(amount: Decimal(184), rate: rate, direction: .toUSDc)
+        #expect(result == Decimal(184) / rate)
     }
 
     @Test
-    func from_usdc_does_not_use_mid_when_spread_is_nonzero() {
-        // Regression for the prior bug where the converter averaged the spread away.
-        let result = CurrencyConverter.convert(amount: Decimal(10), bid: Decimal(18), ask: Decimal(20), direction: .fromUSDc)
-        #expect(result == Decimal(180))  // 10 × bid, NOT 10 × 19 (mid)
+    func zero_amount_returns_zero_in_either_direction() {
+        #expect(CurrencyConverter.convert(amount: 0, rate: rate, direction: .fromUSDc) == 0)
+        #expect(CurrencyConverter.convert(amount: 0, rate: rate, direction: .toUSDc) == 0)
     }
 
     @Test
-    func to_usdc_does_not_use_mid_when_spread_is_nonzero() {
-        let result = CurrencyConverter.convert(amount: Decimal(200), bid: Decimal(18), ask: Decimal(20), direction: .toUSDc)
-        #expect(result == Decimal(10))   // 200 ÷ ask, NOT 200 ÷ 19 (mid)
+    func nonpositive_rate_returns_zero() {
+        #expect(CurrencyConverter.convert(amount: Decimal(10), rate: 0, direction: .fromUSDc) == 0)
+        #expect(CurrencyConverter.convert(amount: Decimal(10), rate: 0, direction: .toUSDc) == 0)
+        #expect(CurrencyConverter.convert(amount: Decimal(10), rate: -1, direction: .fromUSDc) == 0)
     }
 
     @Test
-    func round_trip_with_zero_spread_preserves_value_within_epsilon() {
-        // With bid == ask there's no spread to lose; round-trip should be exact.
-        let rate = Decimal(string: "18.4087350")!
+    func round_trip_with_same_rate_preserves_value_within_epsilon() {
         let original = Decimal(string: "10.5")!
-        let foreign = CurrencyConverter.convert(amount: original, bid: rate, ask: rate, direction: .fromUSDc)
-        let roundTrip = CurrencyConverter.convert(amount: foreign, bid: rate, ask: rate, direction: .toUSDc)
+        let foreign = CurrencyConverter.convert(amount: original, rate: rate, direction: .fromUSDc)
+        let roundTrip = CurrencyConverter.convert(amount: foreign, rate: rate, direction: .toUSDc)
 
         var difference = roundTrip - original
         var positiveDifference = Decimal()
@@ -49,22 +44,6 @@ struct CurrencyConverterTests {
         NSDecimalRound(&positiveDifference, &dummy, 12, .plain)
 
         #expect(positiveDifference < Decimal(string: "0.000000001")!)
-    }
-
-    @Test
-    func zero_amount_returns_zero_in_either_direction() {
-        let from = CurrencyConverter.convert(amount: 0, bid: bid, ask: ask, direction: .fromUSDc)
-        let to = CurrencyConverter.convert(amount: 0, bid: bid, ask: ask, direction: .toUSDc)
-        #expect(from == 0)
-        #expect(to == 0)
-    }
-
-    @Test
-    func nonpositive_rate_returns_zero() {
-        let from = CurrencyConverter.convert(amount: Decimal(10), bid: 0, ask: ask, direction: .fromUSDc)
-        let to = CurrencyConverter.convert(amount: Decimal(10), bid: bid, ask: 0, direction: .toUSDc)
-        #expect(from == 0)
-        #expect(to == 0)
     }
 
     /// Probe for the trailing-zeros artefact seen on the MXN row at extreme inputs.
@@ -77,7 +56,7 @@ struct CurrencyConverterTests {
     func large_amount_conversion_does_not_lose_precision() {
         let amount = Decimal(string: "8888888888778888888888888")!
         let probe = Decimal(string: "17.1762")!
-        let product = CurrencyConverter.convert(amount: amount, bid: probe, ask: probe, direction: .fromUSDc)
+        let product = CurrencyConverter.convert(amount: amount, rate: probe, direction: .fromUSDc)
         let productString = "\(product)"
 
         let integerPart = productString.split(separator: ".").first.map(String.init) ?? productString
@@ -94,7 +73,7 @@ struct CurrencyConverterTests {
         let digits = String(repeating: "9", count: AmountInput.maxIntegerDigits)
         let amount = Decimal(string: digits)!
         let probe = Decimal(string: "17.1762")!
-        let product = CurrencyConverter.convert(amount: amount, bid: probe, ask: probe, direction: .fromUSDc)
+        let product = CurrencyConverter.convert(amount: amount, rate: probe, direction: .fromUSDc)
         let productString = "\(product)"
 
         let parts = productString.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)

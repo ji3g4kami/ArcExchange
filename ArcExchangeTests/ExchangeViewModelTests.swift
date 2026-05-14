@@ -97,17 +97,18 @@ struct ExchangeViewModelTests {
     }
 
     @Test
-    func editing_foreign_recomputes_usdc_using_ask() async {
+    func editing_foreign_recomputes_usdc_using_bid_when_selling_usdc() async {
         let service = MockRateService()
         await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.foreignAmount = Decimal(200)
+        // Default usdcOnTop=true → selling USDc → market buys USDc at bid (18).
+        // Both directions use the bid side until the user swaps.
+        viewModel.foreignAmount = Decimal(180)
         viewModel.userEditedForeign()
 
-        // User buys USDc with foreign → market sells at ask (20), not mid (19).
-        let expectedUsdc = Decimal(200) / Decimal(20)
+        let expectedUsdc = Decimal(180) / Decimal(18)
         let actual = viewModel.usdcAmount ?? 0
         #expect(Self.absoluteDifference(actual, expectedUsdc) < Self.epsilon)
         #expect(viewModel.activeEditor == .toUSDc)
@@ -260,6 +261,32 @@ struct ExchangeViewModelTests {
     }
 
     @Test
+    func formatted_rate_uses_bid_when_selling_usdc() async {
+        let service = MockRateService()
+        await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        let formatted = viewModel.formattedRate ?? ""
+        // bid=18, ask=20. Default direction is selling USDc → label shows bid.
+        #expect(formatted.contains("18"))
+        #expect(!formatted.contains("20"))
+    }
+
+    @Test
+    func formatted_rate_uses_ask_when_buying_usdc() async {
+        let service = MockRateService()
+        await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        viewModel.swap() // now buying USDc → ask side
+        let formatted = viewModel.formattedRate ?? ""
+        #expect(formatted.contains("20"))
+        #expect(!formatted.contains("18"))
+    }
+
+    @Test
     func formatted_rate_renders_one_usdc_to_selected_currency() async {
         let service = MockRateService()
         await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
@@ -287,28 +314,65 @@ struct ExchangeViewModelTests {
     }
 
     @Test
-    func swap_flips_visual_layout_and_active_editor_keeping_inputs_attached_to_their_currency() async {
+    func swap_flips_layout_preserving_typed_value_and_recomputing_other_field_against_new_side() async {
         let service = MockRateService()
-        await service.setTickerResult(.success([Self.tickerMXN()]))
+        await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
         viewModel.usdcAmount = Decimal(10)
         viewModel.userEditedUSDc()
-        let usdcBefore = viewModel.usdcAmount
-        let foreignBefore = viewModel.foreignAmount
+        // Selling USDc → bid (18).
+        #expect(viewModel.foreignAmount == Decimal(10) * Decimal(18))
         #expect(viewModel.usdcOnTop)
         #expect(viewModel.activeEditor == .fromUSDc)
 
         viewModel.swap()
 
+        // Buying USDc → ask (20). The user's typed 10 USDc is preserved;
+        // the derived foreign field re-runs against the new side.
+        // `activeEditor` stays attached to the user's last-typed field;
+        // it only changes when the user actually types into a field.
         #expect(viewModel.usdcOnTop == false)
-        #expect(viewModel.activeEditor == .toUSDc)
-        #expect(viewModel.usdcAmount == usdcBefore)
-        #expect(viewModel.foreignAmount == foreignBefore)
+        #expect(viewModel.activeEditor == .fromUSDc)
+        #expect(viewModel.usdcAmount == Decimal(10))
+        #expect(viewModel.foreignAmount == Decimal(10) * Decimal(20))
 
         viewModel.swap()
+        // Back to bid side; the pair collapses to the original numbers.
         #expect(viewModel.usdcOnTop == true)
         #expect(viewModel.activeEditor == .fromUSDc)
+        #expect(viewModel.usdcAmount == Decimal(10))
+        #expect(viewModel.foreignAmount == Decimal(10) * Decimal(18))
+    }
+
+    @Test
+    func editing_usdc_after_swap_recomputes_foreign_using_ask() async {
+        let service = MockRateService()
+        await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        viewModel.swap() // now buying USDc → ask side
+        viewModel.usdcAmount = Decimal(10)
+        viewModel.userEditedUSDc()
+
+        #expect(viewModel.foreignAmount == Decimal(10) * Decimal(20))
+    }
+
+    @Test
+    func editing_foreign_after_swap_recomputes_usdc_using_ask() async {
+        let service = MockRateService()
+        await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        viewModel.swap() // now buying USDc → ask side
+        viewModel.foreignAmount = Decimal(200)
+        viewModel.userEditedForeign()
+
+        let expected = Decimal(200) / Decimal(20)
+        let actual = viewModel.usdcAmount ?? 0
+        #expect(Self.absoluteDifference(actual, expected) < Self.epsilon)
     }
 }

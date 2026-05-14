@@ -32,9 +32,20 @@ final class ExchangeViewModel {
         return formatter
     }()
 
+    /// The rate side the user is actually transacting at. Determined by the
+    /// swap direction: selling USDc fills foreign at the market's bid;
+    /// buying USDc costs the market's ask. Both `.fromUSDc` and `.toUSDc`
+    /// editor directions read from the same active side — only `swap()`
+    /// changes which side that is.
+    private var activeRate: Decimal? {
+        guard let rate else { return nil }
+        let side = usdcOnTop ? rate.bid : rate.ask
+        return side > 0 ? side : nil
+    }
+
     var formattedRate: String? {
-        guard let mid = rate?.mid, mid > 0 else { return nil }
-        guard let value = Self.rateFormatter.string(from: mid as NSDecimalNumber) else { return nil }
+        guard let activeRate else { return nil }
+        guard let value = Self.rateFormatter.string(from: activeRate as NSDecimalNumber) else { return nil }
         return "1 USDc = \(value) \(selectedCurrency.code)"
     }
 
@@ -96,8 +107,12 @@ final class ExchangeViewModel {
     }
 
     func swap() {
+        // Visual flip only. `activeEditor` follows the user's typed field
+        // (set by `userEditedUSDc/Foreign`), so leaving it untouched is what
+        // lets a double-swap recover the original numbers — flipping it
+        // here would make each swap "forget" which field was the input.
         usdcOnTop.toggle()
-        activeEditor = (activeEditor == .fromUSDc) ? .toUSDc : .fromUSDc
+        recompute(otherFor: activeEditor)
     }
 
     func userEditedUSDc() {
@@ -125,21 +140,21 @@ final class ExchangeViewModel {
     }
 
     private func recompute(otherFor active: ConversionDirection) {
-        guard let rate, rate.bid > 0, rate.ask > 0 else { return }
+        guard let activeRate else { return }
         switch active {
         case .fromUSDc:
             guard let amount = usdcAmount else {
                 if foreignAmount != nil { foreignAmount = nil }
                 return
             }
-            let next = CurrencyConverter.convert(amount: amount, bid: rate.bid, ask: rate.ask, direction: .fromUSDc)
+            let next = CurrencyConverter.convert(amount: amount, rate: activeRate, direction: .fromUSDc)
             if foreignAmount != next { foreignAmount = next }
         case .toUSDc:
             guard let amount = foreignAmount else {
                 if usdcAmount != nil { usdcAmount = nil }
                 return
             }
-            let next = CurrencyConverter.convert(amount: amount, bid: rate.bid, ask: rate.ask, direction: .toUSDc)
+            let next = CurrencyConverter.convert(amount: amount, rate: activeRate, direction: .toUSDc)
             if usdcAmount != next { usdcAmount = next }
         }
     }

@@ -1,18 +1,14 @@
 import Foundation
 
 enum CurrencyConverter {
-    /// Convert between USDc and a foreign currency using the bid/ask side
-    /// appropriate to the direction. The user always lands on the worse end
-    /// of the spread — selling USDc happens at the market's bid; buying USDc
-    /// happens at the market's ask.
-    static func convert(amount: Decimal, bid: Decimal, ask: Decimal, direction: ConversionDirection) -> Decimal {
+    /// Convert between USDc and a foreign currency at a single rate. The
+    /// rate side (bid vs ask) is picked by the caller based on the
+    /// transaction direction — see `ExchangeViewModel.activeRate`.
+    static func convert(amount: Decimal, rate: Decimal, direction: ConversionDirection) -> Decimal {
+        guard rate > 0 else { return 0 }
         switch direction {
-        case .fromUSDc:
-            guard bid > 0 else { return 0 }
-            return amount * bid
-        case .toUSDc:
-            guard ask > 0 else { return 0 }
-            return amount / ask
+        case .fromUSDc: return amount * rate
+        case .toUSDc:   return amount / rate
         }
     }
 }
