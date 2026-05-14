@@ -22,8 +22,7 @@ extension ExchangeViewModel {
         let ticker = Ticker(
             ask: Decimal(string: "18.4105")!,
             bid: Decimal(string: "18.4070")!,
-            book: "usdc_mxn",
-            date: Date()
+            book: "usdc_mxn"
         )
         vm.rate = ExchangeRate(ticker: ticker)
         vm.lastUpdated = Date()

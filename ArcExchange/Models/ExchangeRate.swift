@@ -4,7 +4,6 @@ struct ExchangeRate: Sendable, Equatable {
     let currencyCode: String
     let bid: Decimal
     let ask: Decimal
-    let fetchedAt: Date
 
     var mid: Decimal { (bid + ask) / 2 }
 }
@@ -16,6 +15,5 @@ extension ExchangeRate {
         self.currencyCode = parts[1].uppercased()
         self.bid = ticker.bid
         self.ask = ticker.ask
-        self.fetchedAt = ticker.date
     }
 }

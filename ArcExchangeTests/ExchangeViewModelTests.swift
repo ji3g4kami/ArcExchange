@@ -10,8 +10,7 @@ struct ExchangeViewModelTests {
         Ticker(
             ask: Decimal(string: ask)!,
             bid: Decimal(string: bid)!,
-            book: "usdc_mxn",
-            date: Date(timeIntervalSince1970: 1_700_000_000)
+            book: "usdc_mxn"
         )
     }
 
@@ -19,8 +18,15 @@ struct ExchangeViewModelTests {
         Ticker(
             ask: Decimal(string: ask)!,
             bid: Decimal(string: bid)!,
-            book: "usdc_brl",
-            date: Date(timeIntervalSince1970: 1_700_000_500)
+            book: "usdc_brl"
+        )
+    }
+
+    private static func tickerEUR(ask: String = "0.85", bid: String = "0.84") -> Ticker {
+        Ticker(
+            ask: Decimal(string: ask)!,
+            bid: Decimal(string: bid)!,
+            book: "usdc_eurc"
         )
     }
 
@@ -74,7 +80,7 @@ struct ExchangeViewModelTests {
     }
 
     @Test
-    func editing_usdc_recomputes_foreign_using_mid() async {
+    func editing_usdc_recomputes_foreign_using_bid() async {
         let service = MockRateService()
         await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
         let viewModel = ExchangeViewModel(service: service)
@@ -83,25 +89,25 @@ struct ExchangeViewModelTests {
         viewModel.usdcAmount = Decimal(10)
         viewModel.userEditedUSDc()
 
-        let mid: Decimal = (Decimal(20) + Decimal(18)) / 2
-        let expected = Decimal(10) * mid
+        // User sells USDc → market buys at bid (18), not mid (19).
+        let expected = Decimal(10) * Decimal(18)
         let actual = viewModel.foreignAmount ?? 0
         #expect(Self.absoluteDifference(actual, expected) < Self.epsilon)
         #expect(viewModel.activeEditor == .fromUSDc)
     }
 
     @Test
-    func editing_foreign_recomputes_usdc_using_mid() async {
+    func editing_foreign_recomputes_usdc_using_ask() async {
         let service = MockRateService()
         await service.setTickerResult(.success([Self.tickerMXN(ask: "20", bid: "18")]))
         let viewModel = ExchangeViewModel(service: service)
         await viewModel.bootstrap()
 
-        viewModel.foreignAmount = Decimal(190)
+        viewModel.foreignAmount = Decimal(200)
         viewModel.userEditedForeign()
 
-        let mid: Decimal = (Decimal(20) + Decimal(18)) / 2
-        let expectedUsdc = Decimal(190) / mid
+        // User buys USDc with foreign → market sells at ask (20), not mid (19).
+        let expectedUsdc = Decimal(200) / Decimal(20)
         let actual = viewModel.usdcAmount ?? 0
         #expect(Self.absoluteDifference(actual, expectedUsdc) < Self.epsilon)
         #expect(viewModel.activeEditor == .toUSDc)
@@ -121,6 +127,37 @@ struct ExchangeViewModelTests {
         viewModel.usdcAmount = nil
         viewModel.userEditedUSDc()
         #expect(viewModel.foreignAmount == nil)
+    }
+
+    @Test
+    func selecting_eur_sends_uppercase_EURC_to_api() async {
+        let service = MockRateService()
+        await service.setCurrencyResult(.success(["MXN", "EURc"]))
+        await service.setTickerResult(.success([Self.tickerMXN()]))
+        let viewModel = ExchangeViewModel(service: service)
+        await viewModel.bootstrap()
+
+        await service.setTickerResult(.success([Self.tickerEUR()]))
+        await viewModel.selectCurrency(Currency.resolve("EURc"))
+
+        let calls = await service.tickerCalls
+        #expect(calls.last == ["EURC"], "API should receive uppercase EURC, not display string EURc")
+    }
+
+    @Test
+    func bootstrap_with_eur_selected_sends_uppercase_to_api() async {
+        let service = MockRateService()
+        await service.setTickerResult(.success([Self.tickerEUR()]))
+        let viewModel = ExchangeViewModel(service: service)
+        // Force selection to EURc before bootstrap to exercise the bootstrap path.
+        await viewModel.selectCurrency(Currency.resolve("EURc"))
+        let bootstrapStart = await service.tickerCalls.count
+
+        await viewModel.bootstrap()
+
+        let calls = await service.tickerCalls
+        let bootstrapCall = calls[bootstrapStart]
+        #expect(bootstrapCall == ["EURC"])
     }
 
     @Test

@@ -23,23 +23,4 @@ struct TickerDecodingTests {
         #expect(tickers[1].ask == Decimal(string: "1551")!)
         #expect(tickers[1].bid == Decimal(string: "1539.42903")!)
     }
-
-    @Test
-    func decodes_iso8601_date_with_fractional_seconds() throws {
-        let decoder = JSONDecoder.dolarApp
-        let tickers = try decoder.decode([Ticker].self, from: TickersFixture.twoTickersData)
-
-        var components = DateComponents()
-        components.year = 2025
-        components.month = 10
-        components.day = 20
-        components.hour = 20
-        components.minute = 14
-        components.second = 57
-        components.timeZone = TimeZone(secondsFromGMT: 0)
-        let expected = Calendar(identifier: .gregorian).date(from: components)!
-
-        let interval = tickers[0].date.timeIntervalSince(expected)
-        #expect(abs(interval) < 1.0)
-    }
 }

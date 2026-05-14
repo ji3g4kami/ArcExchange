@@ -49,8 +49,7 @@ nonisolated private func makeStubTickers(for currencyCodes: [String]) -> [Ticker
         Ticker(
             ask: Decimal(string: "20.5")!,
             bid: Decimal(string: "19.5")!,
-            book: "usdc_\(code.lowercased())",
-            date: Date()
+            book: "usdc_\(code.lowercased())"
         )
     }
 }

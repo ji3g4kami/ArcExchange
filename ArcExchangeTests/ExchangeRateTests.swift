@@ -9,8 +9,7 @@ struct ExchangeRateTests {
         let ticker = Ticker(
             ask: Decimal(string: "18.4105")!,
             bid: Decimal(string: "18.40697")!,
-            book: "usdc_mxn",
-            date: Date(timeIntervalSince1970: 0)
+            book: "usdc_mxn"
         )
 
         let rate = try #require(ExchangeRate(ticker: ticker))
@@ -24,8 +23,7 @@ struct ExchangeRateTests {
         let ticker = Ticker(
             ask: Decimal(1551),
             bid: Decimal(string: "1539.42903")!,
-            book: "usdc_ars",
-            date: Date(timeIntervalSince1970: 0)
+            book: "usdc_ars"
         )
         let rate = try #require(ExchangeRate(ticker: ticker))
         #expect(rate.currencyCode == "ARS")
@@ -36,8 +34,7 @@ struct ExchangeRateTests {
         let ticker = Ticker(
             ask: 1,
             bid: 1,
-            book: "weird-book-no-underscore",
-            date: Date(timeIntervalSince1970: 0)
+            book: "weird-book-no-underscore"
         )
         #expect(ExchangeRate(ticker: ticker) == nil)
     }
@@ -47,8 +44,7 @@ struct ExchangeRateTests {
         let ticker = Ticker(
             ask: 1,
             bid: 1,
-            book: "btc_mxn",
-            date: Date(timeIntervalSince1970: 0)
+            book: "btc_mxn"
         )
         #expect(ExchangeRate(ticker: ticker) == nil)
     }

@@ -40,7 +40,7 @@ final class ExchangeViewModel {
 
     func bootstrap() async {
         async let codesFetch = CurrencyCatalog.load(using: service)
-        async let initialRefresh: Void = performRefresh(for: selectedCurrency.code)
+        async let initialRefresh: Void = performRefresh(for: selectedCurrency.apiCode)
 
         let codes = await codesFetch
         availableCurrencies = codes.map(Currency.resolve)
@@ -55,7 +55,7 @@ final class ExchangeViewModel {
 
     func refresh() async {
         refreshTask?.cancel()
-        let code = selectedCurrency.code
+        let code = selectedCurrency.apiCode
         let task = Task {
             await self.performRefresh(for: code)
         }
@@ -125,21 +125,21 @@ final class ExchangeViewModel {
     }
 
     private func recompute(otherFor active: ConversionDirection) {
-        guard let mid = rate?.mid, mid > 0 else { return }
+        guard let rate, rate.bid > 0, rate.ask > 0 else { return }
         switch active {
         case .fromUSDc:
             guard let amount = usdcAmount else {
                 if foreignAmount != nil { foreignAmount = nil }
                 return
             }
-            let next = CurrencyConverter.convert(amount: amount, mid: mid, direction: .fromUSDc)
+            let next = CurrencyConverter.convert(amount: amount, bid: rate.bid, ask: rate.ask, direction: .fromUSDc)
             if foreignAmount != next { foreignAmount = next }
         case .toUSDc:
             guard let amount = foreignAmount else {
                 if usdcAmount != nil { usdcAmount = nil }
                 return
             }
-            let next = CurrencyConverter.convert(amount: amount, mid: mid, direction: .toUSDc)
+            let next = CurrencyConverter.convert(amount: amount, bid: rate.bid, ask: rate.ask, direction: .toUSDc)
             if usdcAmount != next { usdcAmount = next }
         }
     }

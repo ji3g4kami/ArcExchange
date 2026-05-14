@@ -9,6 +9,12 @@ nonisolated struct Currency: Sendable, Equatable, Hashable, Identifiable {
     var fractionDigitLimit: Int {
         code == "USDc" ? 6 : 2
     }
+
+    // Canonical code expected by the API. `code` is the user-facing display
+    // string (e.g. "EURc"); the API expects the ISO-style uppercase form
+    // ("EURC"). For currencies whose display already matches the canonical
+    // form this is a no-op.
+    var apiCode: String { code.uppercased() }
 }
 
 extension Currency {
